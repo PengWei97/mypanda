@@ -27,10 +27,11 @@ CompPolyElastTensorCPCoupled::validParams()
 }
 
 CompPolyElastTensorCPCoupled::CompPolyElastTensorCPCoupled(const InputParameters & parameters)
-  : ComputeElasticityTensor(parameters),
+  : ComputeElasticityTensorBase(parameters),
     _grain_tracker(getUserObject<GrainTrackerMateProp>("grain_tracker")),
     _op_num(coupledComponents("v")),
     _vals(coupledValues("v")),
+    _elastic_tensor_gr(_op_num),
     _length_scale(getParam<Real>("length_scale")),
     _pressure_scale(getParam<Real>("pressure_scale")),
     _JtoeV(6.24150974e18),
@@ -40,6 +41,8 @@ CompPolyElastTensorCPCoupled::CompPolyElastTensorCPCoupled(const InputParameters
 {
   for (MooseIndex(_op_num) op_index = 0; op_index < _op_num; ++op_index)
   {
+    _elastic_tensor_gr[op_index] = &declareProperty<RankFourTensor>(_base_name + 
+        "elasticity_tensor_" + coupledName("v", op_index));
     _Euler_angles_mat_prop_gr[op_index] = &declareProperty<RealVectorValue>(
         "Euler_angles_" + coupledName("v", op_index));
     _crysrot_gr[op_index] = &declareProperty<RankTwoTensor>(_base_name + 
@@ -51,14 +54,18 @@ CompPolyElastTensorCPCoupled::CompPolyElastTensorCPCoupled(const InputParameters
 void
 CompPolyElastTensorCPCoupled::initQpStatefulProperties()
 {
+  // Loop over variables (ops)
   for (MooseIndex(_op_num) op_index = 0; op_index < _op_num; ++op_index)
   {
+    // Initialize Euler angles
     (*_Euler_angles_mat_prop_gr[op_index])[_qp] = RealVectorValue(0.0, 0.0, 0.0);
+
+    // Initialize elasticity tensor
     RotationTensor R = RotationTensor((*_Euler_angles_mat_prop_gr[op_index])[_qp]);
     (*_crysrot_gr[op_index])[_qp] = R.transpose();
-  }
 
-  _elasticity_tensor[_qp].zero();
+    (*_elastic_tensor_gr[op_index])[_qp].zero();
+  }
 }
 
 void 
@@ -67,8 +74,6 @@ CompPolyElastTensorCPCoupled::computeQpElasticityTensor()
   // Get list of active order parameters from grain tracker
   const auto & op_to_grains = _grain_tracker.getVarToFeatureVector(_current_elem->id());
 
-  // Reset the elasticity tensor
-  _elasticity_tensor[_qp].zero();
   Real sum_h = computeGrainContributions(op_to_grains);
 
   // Normalize the elasticity tensor
@@ -93,14 +98,16 @@ CompPolyElastTensorCPCoupled::computeGrainContributions(const std::vector<unsign
     // Interpolation factor for elasticity tensors
     Real h = (1.0 + std::sin(libMesh::pi * ((*_vals[op_index])[_qp] - 0.5))) / 2.0;
 
-    // Sum all rotated elasticity tensors
-    _elasticity_tensor[_qp] += _grain_tracker.getData(grain_id) * h;
-    sum_h += h;
-
-    // Update Euler angles & crystal rotation matrix
+    // get Euler angles
     (*_Euler_angles_mat_prop_gr[op_index])[_qp] = _grain_tracker.updateEulerAngles(grain_id);
+
+    // Initialize elasticity tensor
     RotationTensor R = RotationTensor((*_Euler_angles_mat_prop_gr[op_index])[_qp]);
     (*_crysrot_gr[op_index])[_qp] = R.transpose();
+
+    (*_elastic_tensor_gr[op_index])[_qp] = _grain_tracker.getData(grain_id);
+
+    sum_h += h;
   }
   return sum_h;
 }

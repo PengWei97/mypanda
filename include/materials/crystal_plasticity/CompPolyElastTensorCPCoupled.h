@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "ComputeElasticityTensor.h"
+#include "ComputeElasticityTensorBase.h"
 #include "GrainTrackerMateProp.h"
 
 #include "RankTwoTensor.h"
@@ -25,7 +25,7 @@
  * to rotate the crystal slip system direction and plane normals into the
  * user-specified orientation.
  */
-class CompPolyElastTensorCPCoupled : public ComputeElasticityTensor
+class CompPolyElastTensorCPCoupled : public ComputeElasticityTensorBase
 {
 public:
   static InputParameters validParams();
@@ -55,7 +55,6 @@ protected:
    */
   void updateElasticityTensorDerivatives(const std::vector<unsigned int> & op_to_grains, Real sum_h);
 
-
   const GrainTrackerMateProp & _grain_tracker;
   const unsigned int _op_num;
   const std::vector<const VariableValue *> _vals;
@@ -63,6 +62,9 @@ protected:
   Real _length_scale;
   Real _pressure_scale;
   const Real _JtoeV;
+
+  /// Material property that stores the values of the elasticity tensor
+  std::vector<MaterialProperty<RankFourTensor> *> _elastic_tensor_gr;
 
   /// Material property that stores the values of the Euler Angles for postprocessing
   std::vector<MaterialProperty<RealVectorValue> *> _Euler_angles_mat_prop_gr;
