@@ -256,23 +256,14 @@ CompMultiCPStressFullCoupled::computeQpStress()
     for (unsigned int i = 0; i < _num_models; ++i)
       _models[i]->setActiveOpIndex(_active_op_index);
 
-    // if (_grain_id == FeatureFloodCount::invalid_id)
-    // {
-    //   for (unsigned int i = 0; i < _num_models; ++i)
-    //     _models[i]->resetQpStatefulProperties(op_index);
-
-    //   // continue;
-    // }
-
     _elastic_lagrangian_strain[_qp].zero();
     updateStress((*_stress_gr[_active_op_index])[_qp], (*_Jacobian_mult_gr[_active_op_index])[_qp]); // This is NOT the exact jacobian
 
     if (_grain_id == FeatureFloodCount::invalid_id)
     {
       for (unsigned int i = 0; i < _num_models; ++i)
-        _models[i]->resetQpStatefulProperties(op_index);
+        _models[i]->resetQpStatefulProperties(op_index); // if not add, there will be no decrease in the state vairiables
 
-      // continue;
       (*_elastic_energy_gr[op_index])[_qp] = 0.0;
       (*_plastic_energy_gr[op_index])[_qp] = 0.0;
     }
@@ -300,7 +291,7 @@ CompMultiCPStressFullCoupled::computeQpStress()
 
 void
 CompMultiCPStressFullCoupled::updateStress(RankTwoTensor & cauchy_stress,
-                                                     RankFourTensor & jacobian_mult)
+                                           RankFourTensor & jacobian_mult)
 {
   // Does not support face/boundary material property calculation
   if (isBoundaryMaterial())
@@ -374,12 +365,6 @@ CompMultiCPStressFullCoupled::preSolveQp()
 
   (*_pk2_gr[_active_op_index])[_qp] = (*_pk2_gr_old[_active_op_index])[_qp];
   _inverse_plastic_deformation_grad_old = (*_plastic_deformation_gradient_gr_old[_active_op_index])[_qp].inverse();
-
-  if (_grain_id == FeatureFloodCount::invalid_id)
-  {
-    for (unsigned int i = 0; i < _num_models; ++i)
-      _models[i]->resetInitialConstitutiveVariableValues();
-  }
 }
 
 void
@@ -602,7 +587,7 @@ CompMultiCPStressFullCoupled::calculateResidual()
 
   equivalent_slip_increment.zero();
 
-  // calculate slip rate in order to compute F^{p-1}  
+  // calculate slip rate in order to compute F^{p-1}
   for (unsigned int i = 0; i < _num_models; ++i)
   {
     equivalent_slip_increment_per_model.zero();
@@ -619,7 +604,7 @@ CompMultiCPStressFullCoupled::calculateResidual()
     _models[i]->calculateEquivalentSlipIncrement(equivalent_slip_increment_per_model);
     equivalent_slip_increment += equivalent_slip_increment_per_model;
   }
-  
+
   RankTwoTensor residual_equivalent_slip_increment =
       RankTwoTensor::Identity() - equivalent_slip_increment;
   _inverse_plastic_deformation_grad =
