@@ -28,6 +28,7 @@ mypandaApp::registerAll(Factory & f, ActionFactory & af, Syntax & s)
   Registry::registerActionsTo(af, {"mypandaApp"});
 
   /* register custom execute flags, action syntax, etc. here */
+  s.registerActionSyntax("PolyStoredEnergyEBSDAction", "Kernels/PolyStoredEnergyEBSD");
 }
 
 void
