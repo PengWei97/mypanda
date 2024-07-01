@@ -236,6 +236,9 @@ protected:
   /// Flag to check whether convergence is achieved or if substepping is needed
   bool _convergence_failed;
 
+  /// Flag to chech whether the order parameter is actived
+  bool _is_active_op;
+
   ///@{ Used for substepping; Uniformly divides the increment in deformation gradient
   RankTwoTensor _delta_deformation_gradient;
   RankTwoTensor _temporary_deformation_gradient_old;

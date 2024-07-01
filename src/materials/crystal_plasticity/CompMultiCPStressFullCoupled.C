@@ -115,6 +115,7 @@ CompMultiCPStressFullCoupled::CompMultiCPStressFullCoupled(
     _Jacobian_mult_gr(_op_num),
     _updated_rotation_gr(_op_num),
     _print_convergence_message(getParam<bool>("print_state_variable_convergence_error_messages")),
+    _is_active_op(true),
     _elastic_energy_gr(_op_num),
     _plastic_energy_gr(_op_num)
 {
@@ -250,6 +251,7 @@ CompMultiCPStressFullCoupled::computeQpStress()
   _Jacobian_mult[_qp].zero();
   for (MooseIndex(op_to_grains) op_index = 0; op_index < op_to_grains.size(); ++op_index)
   {
+    _is_active_op = true;
     _grain_id = op_to_grains[op_index];
 
     _active_op_index = op_index;
@@ -261,6 +263,8 @@ CompMultiCPStressFullCoupled::computeQpStress()
 
     if (_grain_id == FeatureFloodCount::invalid_id)
     {
+      _is_active_op = false;
+
       for (unsigned int i = 0; i < _num_models; ++i)
         _models[i]->resetQpStatefulProperties(op_index); // if not add, there will be no decrease in the state vairiables
 
@@ -268,8 +272,9 @@ CompMultiCPStressFullCoupled::computeQpStress()
       (*_plastic_energy_gr[op_index])[_qp] = 0.0;
     }
     else
-    {
+    {    
       (*_elastic_energy_gr[op_index])[_qp] = 0.5 * ((*_pk2_gr[_active_op_index])[_qp]).doubleContraction(_elastic_lagrangian_strain[_qp]);
+
       for (unsigned int i = 0; i < _num_models; ++i)
         _models[i]->calculatePlasticityEnergy((*_plastic_energy_gr[op_index])[_qp], op_index);
     }
@@ -365,6 +370,12 @@ CompMultiCPStressFullCoupled::preSolveQp()
 
   (*_pk2_gr[_active_op_index])[_qp] = (*_pk2_gr_old[_active_op_index])[_qp];
   _inverse_plastic_deformation_grad_old = (*_plastic_deformation_gradient_gr_old[_active_op_index])[_qp].inverse();
+
+  if (_grain_id == FeatureFloodCount::invalid_id)
+  {
+    for (unsigned int i = 0; i < _num_models; ++i)
+      _models[i]->resetInitialConstitutiveVariableValues();
+  }
 }
 
 void
@@ -602,6 +613,7 @@ CompMultiCPStressFullCoupled::calculateResidual()
       return;
 
     _models[i]->calculateEquivalentSlipIncrement(equivalent_slip_increment_per_model);
+
     equivalent_slip_increment += equivalent_slip_increment_per_model;
   }
 
