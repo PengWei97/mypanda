@@ -10,7 +10,7 @@
 #include "DeformedGrainEBSDMaterial.h"
 #include "GrainTrackerInterface.h"
 
-registerMooseObject("qinglongApp", DeformedGrainEBSDMaterial);
+registerMooseObject("mypandaApp", DeformedGrainEBSDMaterial);
 
 InputParameters
 DeformedGrainEBSDMaterial::validParams()

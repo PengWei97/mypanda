@@ -7,6 +7,22 @@ For more information see: [https://mooseframework.org/getting_started/new_users.
 
 ---
 
+## Basic MOOSE
+
+### Some commonly used commanda lines
+
+```bash
+# update moose
+mamba update --all --yes
+git pull origin next
+make -j10
+./run_test -j10
+
+# TODO
+```
+---
+## Upcoming & Ongoing works
+
 ### Upcoming Work:
 1. **Polycrystalline Simulations in Coupled PC-PF Model:**
    - **Objective:** Extend the current bicrystal simulation capabilities to support polycrystalline structures.
