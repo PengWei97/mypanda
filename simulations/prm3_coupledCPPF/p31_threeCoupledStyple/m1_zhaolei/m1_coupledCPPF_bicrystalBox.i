@@ -76,7 +76,7 @@ my_filename = "s1_fullCoupledCPPF"
     [./BicrystalBoundingBoxIC]
       x1 = 0
       y1 = 0
-      x2 = 150
+      x2 = 200
       y2 = 50
     [../]
   [../]
@@ -264,7 +264,7 @@ my_filename = "s1_fullCoupledCPPF"
     type = CompMultiCPStressFullCoupled 
     crystal_plasticity_models = 'trial_xtalpls'
     tan_mod_type = exact
-    maximum_substep_iteration = 100
+    maximum_substep_iteration = 5
     min_line_search_step_size = 0.01
 
     grain_tracker = grain_tracker
@@ -348,7 +348,7 @@ my_filename = "s1_fullCoupledCPPF"
   start_time = 0.0
   
   # num_steps = 3
-  end_time = 30.0
+  end_time = 20.0
   [./TimeStepper]
     type = IterationAdaptiveDT
     dt = 0.05
