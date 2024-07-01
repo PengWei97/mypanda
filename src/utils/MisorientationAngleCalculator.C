@@ -19,7 +19,7 @@ namespace MisorientationAngleCalculator
     const QuatReal & q2 = Euler2.toQuaternion();
     const QuatReal mori_q1q2 = itimesQuaternion(q1, q2); // inv(q1)*q2
 
-    const std::vector<QuatReal> q3_twin = getKeyQuat(QuatType::getTwinning);
+    const std::vector<QuatReal> q3_twin = getKeyQuat(QuatType::getTwinning, crystal_type);
     std::vector<QuatReal> qcs = getKeyQuat(QuatType::getCSymm, crystal_type);
     std::vector<QuatReal> qss = getKeyQuat(QuatType::getSSymm);
 
@@ -39,14 +39,23 @@ namespace MisorientationAngleCalculator
       s._is_twin = (bool)(misor_twinning < tolerance_mis); // Judging whether it is a twin boundary
 
       // Determine which type of twin boundary 0 ~ TT1 (tensile twins), 1 ~ CT1 (compression twins)
-      if (s._is_twin)
+      if (s._is_twin && crystal_type == CrystalType::HCP)
       {
         if (i == 0)
-          s._twin_type = TwinType::TT1;
+          s._twin_type = TwinType::TT1_HCP;
         else if (i == 1)
-          s._twin_type = TwinType::CT1;
+          s._twin_type = TwinType::CT1_HCP;
 
         break;
+      }
+      else if (s._is_twin && crystal_type == CrystalType::FCC)
+      {
+        if (i == 0)
+          s._twin_type = TwinType::Sigma3_FCC;
+        else if (i == 1)
+          s._twin_type = TwinType::Sigma9_FCC;
+
+        break;        
       }
     }
     return s;
@@ -56,16 +65,22 @@ namespace MisorientationAngleCalculator
   {
     std::vector<std::vector<Real>> q_num;
 
-    if (quat_type == QuatType::getTwinning)
+    if (quat_type == QuatType::getTwinning && crystal_type == CrystalType::HCP)
       q_num = {
-        {0.73728,  0.58508,  0.3378,  0},
+        {0.73728,  0.58508,  0.3378,  0}, // The quaternion corresponding to the crystallography orientation 
         {0.84339,  0.53730,  0,       0}
-      }; // Quaternion for HCP twinning from MTEX (TT1 and CT2);
+      };
+    else if (quat_type == QuatType::getTwinning && crystal_type == CrystalType::FCC)
+      q_num = {
+        {0.8660,  0.2887,  0.2887,  0.2887}, // Sigma3
+        {0.9428,  0.0,     0.2357,  0.2357} // Sigma9
+      };
+      // Quaternion for FCC twinning from MTEX;
     else if (quat_type == QuatType::getSSymm)
       q_num = {
         {-1.000e+00,  0.000e+00,  0.000e+00, -2.220e-16}
       }; // from MTEX;  
-    else if ( quat_type == QuatType::getCSymm && crystal_type == CrystalType::HCP)
+    else if (quat_type == QuatType::getCSymm && crystal_type == CrystalType::HCP)
       q_num = {
         { 1.000e+00,  0.000e+00,  0.000e+00,  0.000e+00},
         { 0.000e+00,  8.660e-01, -5.000e-01,  0.000e+00},
@@ -80,7 +95,7 @@ namespace MisorientationAngleCalculator
         {-8.660e-01,  0.000e+00,  0.000e+00,  5.000e-01},
         { 0.000e+00, -1.000e+00,  0.000e+00,  0.000e+00}
       }; // 12 symmetric for hcp
-    else if ( quat_type == QuatType::getCSymm && crystal_type == CrystalType::FCC)
+    else if (quat_type == QuatType::getCSymm && crystal_type == CrystalType::FCC)
       q_num = {
         { 1.000E+00,	 0.000E+00, 	 0.000E+00, 	 0.000E+00},
         { 5.000E-01,	 5.000E-01, 	 5.000E-01, 	 5.000E-01},
