@@ -92,7 +92,7 @@ ACSEDGPolyEBSD::computeDFDOP(PFFunctionType type)
   {
     case Residual:
     {
-      if (_fe_problem.time() > 0.01)
+      if (_fe_problem.time() > 10.0)
         return _beta[_qp] * drho_eff_detai;
       else
         return 0.0;

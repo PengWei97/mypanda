@@ -76,7 +76,8 @@ GBAnisotropyMisoriBase::computeQpProperties()
   std::fill(_mob.begin(), _mob.end(), std::vector<Real>(_op_num, _GBmob_HAGB));
   std::fill(_Q.begin(), _Q.end(), std::vector<Real>(_op_num, _Q_HAGB));
 
-  computeGBProperties();
+  if (_fe_problem.time())
+    computeGBProperties();
 
   // convert unit
   for (unsigned int m = 0; m < _op_num - 1; ++m)
