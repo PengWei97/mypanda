@@ -1,4 +1,6 @@
 *.gz
+*.tgz
+*.inl
 .libs
 *.la
 *.lo
