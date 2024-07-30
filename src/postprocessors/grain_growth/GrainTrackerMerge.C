@@ -9,13 +9,16 @@ GrainTrackerMerge::validParams()
   params.addClassDescription("Grain Tracker derived object for merging of grains based on misorientation angle.");
   params.addRequiredParam<UserObjectName>("euler_angle_provider",
                                           "Name of Euler angle provider user object");
+  MooseEnum crystal_structures("FCC BCC HCP", "FCC");
+  params.addParam<MooseEnum>("crystal_structure", crystal_structures, "The type of crystal structure");                        
 
   return params;
 }
 
 GrainTrackerMerge::GrainTrackerMerge(const InputParameters & parameters)
   : GrainTracker(parameters),
-    _euler(getUserObject<EulerAngleProvider>("euler_angle_provider"))
+    _euler(getUserObject<EulerAngleProvider>("euler_angle_provider")),
+    _crystal_structure(getParam<MooseEnum>("crystal_structure").getEnum<MisorientationAngleCalculator::CrystalType>())
 {
 }
 
@@ -48,7 +51,7 @@ GrainTrackerMerge::mergeGrainsBasedMisorientation()
 
         EulerAngles angles_j = _euler.getEulerAngles(grain_j._id);
 
-        misor_angle = MisorientationAngleCalculator::calculateMisorientaion(angles_i, angles_j, _s_misorientation_angle)._misor;
+        misor_angle = MisorientationAngleCalculator::calculateMisorientaion(angles_i, angles_j, _s_misorientation_angle, _crystal_structure)._misor;
 
         if (misor_angle < 1.0)
         {

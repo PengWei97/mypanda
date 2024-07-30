@@ -28,4 +28,6 @@ protected:
 
   // This data structure is used to store the mapping from Grain ID to index in feature sets
   std::map<unsigned int, std::size_t> _feature_id_to_index_maps;
+
+  MisorientationAngleCalculator::CrystalType _crystal_structure;
 };

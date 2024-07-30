@@ -18,6 +18,8 @@ GBAnisotropyMisori::validParams()
   InputParameters params = GBAnisotropyMisoriBase::validParams();
   params.addClassDescription(
       "Computes necessary material properties for the anisotropic grain growth model");
+  MooseEnum crystal_structures("FCC BCC HCP", "FCC");
+  params.addParam<MooseEnum>("crystal_structure", crystal_structures, "The type of crystal structure");
   params.addParam<Real>("TT1_sigma",  0.9, "Twin boundary energy for {10-12} tensile twin (type 1) based on MD, J/m^2");
   params.addParam<Real>("CT1_sigma",  0.9, "Twin boundary energy for {11-22} compresssion twin (type 1) based on MD, J/m^2");  
   params.addParam<Real>("TT1_mob", 2.5e-6, "Twin boundary mobility for {10-12} tensile twin (type 1) based on experiment, m^4/(J*s)");
@@ -33,14 +35,14 @@ GBAnisotropyMisori::validParams()
   params.addParam<bool>("gb_energy_anisotropy", false,
       "The GB energy anisotropy based on misorientation would be considered if true");
   params.addParam<bool>("gb_mobility_anisotropy", true,
-      "The GB mobility anisotropy would be considered if true");                                          
+      "The GB mobility anisotropy would be considered if true"); 
   return params;
-
-  // TODO - 添加晶体类型到输出参数中， FCC BCC HCP
 }
 
 GBAnisotropyMisori::GBAnisotropyMisori(const InputParameters & parameters)
   : GBAnisotropyMisoriBase(parameters),
+    _crystal_structure(getParam<MooseEnum>("crystal_structure").getEnum<MisorientationAngleCalculator::CrystalType>()),
+
     _TT1_sigma(getParam<Real>("TT1_sigma")),
     _CT1_sigma(getParam<Real>("CT1_sigma")),
     _TT1_mob(getParam<Real>("TT1_mob")),
@@ -49,12 +51,13 @@ GBAnisotropyMisori::GBAnisotropyMisori(const InputParameters & parameters)
     _Sigma9_sigma(getParam<Real>("Sigma9_sigma")),
     _Sigma3_mob(getParam<Real>("Sigma3_mob")),
     _Sigma9_mob(getParam<Real>("Sigma9_mob")),
+
     _grain_tracker(getUserObject<GrainTracker>("grain_tracker")),
     _euler(getUserObject<EulerAngleProvider>("euler_angle_provider")),
     _gb_energy_anisotropy(getParam<bool>("gb_energy_anisotropy")),
     _gb_mobility_anisotropy(getParam<bool>("gb_mobility_anisotropy")),
     _misori_angle(declareProperty<Real>("misori_angle")),
-    _twinning_type(declareProperty<Real>("twinning_type"))  
+    _twinning_type(declareProperty<Real>("twinning_type"))
 {
 }
 
@@ -105,14 +108,14 @@ GBAnisotropyMisori::computeGBProperties()
         auto & _mob_ij = _mob[var_index[i]][var_index[j]];
 
         // calculate misorientation angle
-        _misori_s = MisorientationAngleCalculator::calculateMisorientaion(angles_i, angles_j, _misori_s, CrystalType::HCP);
+        _misori_s = MisorientationAngleCalculator::calculateMisorientaion(angles_i, angles_j, _misori_s, _crystal_structure);
 
-        if (_gb_energy_anisotropy ) // && (time_current > 10.0)
+        if (_gb_energy_anisotropy) // && (time_current > 10.0)
           _sigma_ij = calculatedGBEnergy(_misori_s);
         else
           _sigma_ij = _GBsigma_HAGB;
 
-        if (_gb_mobility_anisotropy ) // && (time_current > 10.0)
+        if (_gb_mobility_anisotropy) // && (time_current > 10.0)
           _mob_ij = calculatedGBMobility(_misori_s);
         else
           _mob_ij = _GBmob_HAGB;

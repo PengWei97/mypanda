@@ -11,6 +11,7 @@
 
 #include "GBAnisotropyMisoriBase.h"
 
+#include "MooseEnum.h"
 #include "EulerAngleProvider.h"
 #include "GrainTracker.h"
 #include "MisorientationAngleCalculator.h"
@@ -42,6 +43,7 @@ protected:
 
   // used to store orientation structure, including misorientation angle, istwinnig, twinning type;
   MisorientationAngleData _misori_s;
+  MisorientationAngleCalculator::CrystalType _crystal_structure;
   
   // for HCP_Ti
   const Real _TT1_sigma;
@@ -63,4 +65,5 @@ protected:
 
   MaterialProperty<Real> & _misori_angle;
   MaterialProperty<Real> & _twinning_type;
+
 };
