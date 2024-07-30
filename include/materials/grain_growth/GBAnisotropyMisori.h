@@ -41,6 +41,12 @@ protected:
   // calculated GB mobility based on the sigmoidal law
   virtual Real calculatedGBMobility(const MisorientationAngleData & misori_s);
 
+  // determine the twinning type based on misorientation data
+  Real determineTwinningType(const MisorientationAngleData & misori_s);
+
+  // fill symmetric properties with averaged values
+  void fillSymmetricProperties(Real sigma_min, Real sigma_max, Real mob_min, Real mob_max);
+
   // used to store orientation structure, including misorientation angle, istwinnig, twinning type;
   MisorientationAngleData _misori_s;
   MisorientationAngleCalculator::CrystalType _crystal_structure;

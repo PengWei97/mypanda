@@ -127,54 +127,24 @@ GBAnisotropyMisori::computeGBProperties()
         if (i == 0 && j == 1)
         {
           _misori_angle[_qp] =  _misori_s._misor;
+          _twinning_type[_qp] = determineTwinningType(_misori_s);
 
-          if (_misori_s._is_twin && (_misori_s._twin_type == TwinType::TT1_HCP))
-            _twinning_type[_qp] = 1.0;
-          else if (_misori_s._is_twin && (_misori_s._twin_type == TwinType::CT1_HCP))
-            _twinning_type[_qp] = 2.0;
-          if (_misori_s._is_twin && (_misori_s._twin_type == TwinType::Sigma3_FCC))
-            _twinning_type[_qp] = 3.0;
-          else if (_misori_s._is_twin && (_misori_s._twin_type == TwinType::Sigma9_FCC))
-            _twinning_type[_qp] = 4.0;
-          else
-            _twinning_type[_qp] = 0.0; // GB
-
-          sigma_min = _sigma_ij;
-          sigma_max = _sigma_ij;
-
-          mob_min = _mob_ij;          
-          mob_max = _mob_ij;
+          sigma_min = sigma_max = _sigma_ij;
+          mob_min = mob_max = _mob_ij;
         }
 
-        if (sigma_min > _sigma_ij)
-          sigma_min = _sigma_ij;
-        else if (sigma_max < _sigma_ij)
-          sigma_max = _sigma_ij;
-
-        if (mob_min > _mob_ij)
-          mob_min = _mob_ij;
-        else if (mob_max < _mob_ij)
-          mob_max = _mob_ij;
+        sigma_min = std::min(sigma_min, _sigma_ij);
+        sigma_max = std::max(sigma_max, _sigma_ij);
+        mob_min = std::min(mob_min, _mob_ij);
+        mob_max = std::max(mob_max, _mob_ij);
       }
     }
 
-    for (unsigned int i = 0; i < _op_num; ++i)
-      for (unsigned int j = 0; j < _op_num; ++j)
-      {
-        if ((_sigma[i][j] == 0.0))
-        {
-          _sigma[i][j] = (sigma_max + sigma_min) / 2.0;
-          _sigma[j][i] = (sigma_max + sigma_min) / 2.0;
-        }
-
-        if ((_mob[i][j] == 0.0))
-        {
-          _mob[i][j] = (mob_max + mob_min) / 2.0;
-          _mob[j][i] = (mob_max + mob_min) / 2.0;
-        }
-      }
+    fillSymmetricProperties(sigma_min, sigma_max, mob_min, mob_max);
   }
 }
+
+
 
 Real
 GBAnisotropyMisori::calculatedGBEnergy(const MisorientationAngleData & misori_s)
@@ -233,4 +203,36 @@ GBAnisotropyMisori::calculatedGBMobility(const MisorientationAngleData & misori_
   }
 
   return gbMob;
+}
+
+Real 
+GBAnisotropyMisori::determineTwinningType(const MisorientationAngleData & misori_s)
+{
+  if (misori_s._is_twin)
+  {
+    switch (misori_s._twin_type)
+    {
+      case TwinType::TT1_HCP: return 1.0;
+      case TwinType::CT1_HCP: return 2.0;
+      case TwinType::Sigma3_FCC: return 3.0;
+      case TwinType::Sigma9_FCC: return 4.0;
+      default: return 0.0; // GB
+    }
+  }
+  return 0.0; // GB
+}
+
+// Fill symmetric properties with averaged values
+void 
+GBAnisotropyMisori::fillSymmetricProperties(Real sigma_min, Real sigma_max, Real mob_min, Real mob_max)
+{
+  for (unsigned int i = 0; i < _op_num; ++i)
+    for (unsigned int j = 0; j < _op_num; ++j)
+    {
+      if (_sigma[i][j] == 0.0)
+        _sigma[i][j] = _sigma[j][i] = (sigma_max + sigma_min) / 2.0;
+
+      if (_mob[i][j] == 0.0)
+        _mob[i][j] = _mob[j][i] = (mob_max + mob_min) / 2.0;
+    }
 }
