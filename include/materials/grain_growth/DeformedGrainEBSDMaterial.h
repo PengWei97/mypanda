@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include "DerivativeMaterialInterface.h"
 #include "Material.h"
 #include "EBSDReader.h"
 
@@ -20,7 +21,7 @@ class GrainTrackerInterface;
  * dislocation density (GNDs) from EBSD data file.
  * MaterialProperty [_beta, _rho_eff] are used to calculated the stored energy.
  */
-class DeformedGrainEBSDMaterial : public Material
+class DeformedGrainEBSDMaterial : public DerivativeMaterialInterface<Material>
 {
 public:
   static InputParameters validParams();
@@ -41,9 +42,9 @@ protected:
   const Real _Burg_vec; // the Length of Burger's Vector
   const Real _stored_factor;
   const Real _JtoeV; // Joule to eV conversion
-  const bool _concurrent_recovery;
-
+  
   // concurrent recovery function
+  const bool _concurrent_recovery;
   const Real _rho_end_l2;
   const Real  _rho_end_l3;
   const Real _rho_critical;
@@ -52,8 +53,8 @@ protected:
 
   MaterialProperty<Real> & _beta;
   MaterialProperty<Real> & _rho_eff; // the average effective dislocation density
-
-  MaterialProperty<Real> & _test_loc;
+  std::vector<MaterialProperty<Real> *> _D_stored_energy;
+  MaterialProperty<Real> & _sumEtai2;
  
   const GrainTrackerInterface & _grain_tracker; // Grain tracker object
   const EBSDReader & _GNDs_provider;

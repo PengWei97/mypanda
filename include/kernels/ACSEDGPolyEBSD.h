@@ -37,34 +37,5 @@ public:
 protected:
   virtual Real computeDFDOP(PFFunctionType type);
 
-  virtual Real getGNDsFromEBSD(const unsigned int & grain_id);
-
-  const unsigned int _op_num;
-
-  const std::vector<const VariableValue *> _vals;
-  const std::vector<unsigned int> _vals_var;
-
-  const Real _length_scale;
-  const bool _concurrent_recovery;
-  /// the prefactor needed to calculate the deformation energy from dislocation density
-  const MaterialProperty<Real> & _beta;
-
-  /// the average/effective dislocation density
-  const MaterialProperty<Real> & _rho_eff;
-
-  /// Grain tracker object
-  const GrainTrackerInterface & _grain_tracker;
-
-  /// Grain tracker object
-  const EBSDReader & _GNDs_provider;
-
-  /// index of the OP the kernel is currently acting on
-  unsigned int _op_index;
-
-  // concurrent recovery function
-  const Real _rho_end_l2;
-  const Real _rho_end_l3;
-  const Real _rho_critical;
-  const Real _a_rho_l2;
-  const Real _a_rho_l3;
+  const MaterialProperty<Real> & _D_stored_energy;
 };
