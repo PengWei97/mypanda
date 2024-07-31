@@ -10,7 +10,6 @@
 #pragma once
 
 #include "GBAnisotropyMisoriBase.h"
-
 #include "MooseEnum.h"
 #include "EulerAngleProvider.h"
 #include "GrainTracker.h"
@@ -19,10 +18,10 @@
 // Forward Declarations
 
 /**
- * GBAnisotropyMisoriBase is created based on GrainTracker for real-time acquisition of
- * sigma_ij, mob_ij based on misorientation angle.
- * function 1: GB anisotropy based classic theroies
- * function 2: Low-energy and low-mobility properties of twin interfaces
+ * GBAnisotropyMisori is created based on GrainTracker for real-time acquisition of
+ * sigma_ij and mob_ij based on misorientation angle.
+ * - Function 1: GB anisotropy based on classic theories
+ * - Function 2: Low-energy and low-mobility properties of twin interfaces
  */
 class GBAnisotropyMisori : public GBAnisotropyMisoriBase
 {
@@ -32,44 +31,49 @@ public:
   GBAnisotropyMisori(const InputParameters & parameters);
 
 protected:
-  // Set sigma_ij, mob_ij, Q_ij for specific grain boundaries
+  // Compute sigma_ij and mob_ij for specific grain boundaries
   virtual void computeGBProperties() override;
 
-  // calculated GB energy based on the the Read-Shockley
+  // Calculate GB energy based on the Read-Shockley model
   virtual Real calculatedGBEnergy(const MisorientationAngleData & misori_s);
 
-  // calculated GB mobility based on the sigmoidal law
+  // Calculate GB mobility based on the sigmoidal law
   virtual Real calculatedGBMobility(const MisorientationAngleData & misori_s);
 
-  // determine the twinning type based on misorientation data
+  // Determine the twinning type based on misorientation data
   Real determineTwinningType(const MisorientationAngleData & misori_s);
 
-  // fill symmetric properties with averaged values
+  // Fill symmetric properties with averaged values
   void fillSymmetricProperties(Real sigma_min, Real sigma_max, Real mob_min, Real mob_max);
 
-  // used to store orientation structure, including misorientation angle, istwinnig, twinning type;
+  // Store misorientation angle data, including twinning type
   MisorientationAngleData _misori_s;
   MisorientationAngleCalculator::CrystalType _crystal_structure;
   
-  // for HCP_Ti
+  // Twin boundary properties for HCP_Ti
   const Real _TT1_sigma;
   const Real _CT1_sigma;
   const Real _TT1_mob;
   const Real _CT1_mob;
 
-  // for FCC_Ni
+  // Twin boundary properties for FCC_Ni
   const Real _Sigma3_sigma;
   const Real _Sigma9_sigma;
   const Real _Sigma3_mob;
   const Real _Sigma9_mob;
 
+  // GrainTracker user object for acquiring grain IDs
   const GrainTracker & _grain_tracker;
+  
+  // Euler angle provider user object for acquiring Euler angles
   const EulerAngleProvider & _euler; 
 
+  // Flags to consider GB energy and mobility anisotropy
   const bool _gb_energy_anisotropy;
   const bool _gb_mobility_anisotropy;    
 
+  // Material properties to store misorientation angle and twinning type
   MaterialProperty<Real> & _misori_angle;
   MaterialProperty<Real> & _twinning_type;
-
 };
+
