@@ -22,5 +22,4 @@ protected:
 
   const bool _stored_energy_mobility;
   const EBSDReader & _ebsd_reader;
-  MaterialProperty<Real> & _delta_rho;
 };

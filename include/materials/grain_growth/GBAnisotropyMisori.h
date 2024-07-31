@@ -84,5 +84,6 @@ protected:
   // Material properties to store misorientation angle and twinning type
   MaterialProperty<Real> & _misori_angle;
   MaterialProperty<Real> & _twinning_type;
+  MaterialProperty<Real> & _delta_rho;
 };
 

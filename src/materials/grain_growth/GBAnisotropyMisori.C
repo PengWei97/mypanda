@@ -61,7 +61,8 @@ GBAnisotropyMisori::GBAnisotropyMisori(const InputParameters & parameters)
     _gb_energy_anisotropy(getParam<bool>("gb_energy_anisotropy")),
     _gb_mobility_anisotropy(getParam<bool>("gb_mobility_anisotropy")),
     _misori_angle(declareProperty<Real>("misori_angle")),
-    _twinning_type(declareProperty<Real>("twinning_type"))
+    _twinning_type(declareProperty<Real>("twinning_type")),
+    _delta_rho(declareProperty<Real>("delta_rho"))
 {
 }
 
@@ -72,6 +73,7 @@ GBAnisotropyMisori::computeGBProperties()
 
   _misori_angle[_qp] = 0.0;
   _twinning_type[_qp] = -1.0;
+  _delta_rho[_qp] = 0.0;
 
   // get the GB location based on the GrainTracker in the quadrature point
   const auto & op_to_grains = _grain_tracker.getVarToFeatureVector(_current_elem->id()); 

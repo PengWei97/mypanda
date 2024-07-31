@@ -15,18 +15,14 @@ GBAnisotropyWtStoredEnergy::validParams()
 GBAnisotropyWtStoredEnergy::GBAnisotropyWtStoredEnergy(const InputParameters & parameters)
   : GBAnisotropyMisori(parameters),
   _stored_energy_mobility(getParam<bool>("stored_energy_mobility")),
-  _ebsd_reader(getUserObject<EBSDReader>("ebsd_reader")),
-  _delta_rho(declareProperty<Real>("delta_rho"))
+  _ebsd_reader(getUserObject<EBSDReader>("ebsd_reader"))
 {
-  _delta_rho[_qp] = 0.0;
 }
 
 void 
 GBAnisotropyWtStoredEnergy::computeSigmaAndMobility(const std::vector<unsigned int> & var_index,
                                                     const std::vector<unsigned int> & grain_id_index)
-{
-  _delta_rho[_qp] = 0.0;
-  
+{ 
   for (unsigned int i = 0; i < grain_id_index.size() - 1; ++i)
   {
     auto & grain_i = grain_id_index[i];
@@ -46,7 +42,8 @@ GBAnisotropyWtStoredEnergy::computeSigmaAndMobility(const std::vector<unsigned i
       _misori_s = MisorientationAngleCalculator::calculateMisorientaion(angles_i, angles_j, _misori_s, _crystal_structure);
 
       // TODO
-      _delta_rho[_qp] = std::abs(rho_i - rho_j) * _length_scale * _length_scale;
+      Real delta_rho = std::abs(rho_i - rho_j) * _length_scale * _length_scale;
+      _delta_rho[_qp] = delta_rho;
 
       // Compute sigma_ij
       _sigma_ij = _gb_energy_anisotropy ? calculatedGBEnergy(_misori_s) : _GBsigma_HAGB;
@@ -56,7 +53,7 @@ GBAnisotropyWtStoredEnergy::computeSigmaAndMobility(const std::vector<unsigned i
 
       // Compute mob_ij with rho
       if (_stored_energy_mobility)
-       calculatedGBMobilityWtRho(_delta_rho[_qp], _mob_ij);
+       calculatedGBMobilityWtRho(delta_rho, _mob_ij);
 
       _sigma[var_index[j]][var_index[i]] = _sigma_ij;
       _mob[var_index[j]][var_index[i]] = _mob_ij;
@@ -67,4 +64,17 @@ GBAnisotropyWtStoredEnergy::computeSigmaAndMobility(const std::vector<unsigned i
 void
 GBAnisotropyWtStoredEnergy::calculatedGBMobilityWtRho(const Real & delta_rho, Real & mob_ij)
 {
+  Real mob_ij_high = mob_ij * 10.0;
+
+  Real trans_misori_rho = 90; // 1/(\miu m)^2
+
+  // Equation constant
+  Real B = 5;
+  Real n = 4;
+
+  if (delta_rho <= trans_misori_rho && delta_rho > 20.0)
+    mob_ij = mob_ij_high * ((1- std::exp(-B * std::pow( delta_rho / trans_misori_rho, n)))); // Eq.8
+  else if (delta_rho > trans_misori_rho)
+    mob_ij = mob_ij_high;
+
 }
