@@ -34,6 +34,15 @@ protected:
   // Compute sigma_ij and mob_ij for specific grain boundaries
   virtual void computeGBProperties() override;
 
+  // Computes the sigma_ij and mob_ij values for each pair of active grains.
+  virtual void computeSigmaAndMobility(const std::vector<unsigned int> & var_index,
+                                       const std::vector<unsigned int> & grain_id_index);
+
+  // updates the min and max values for sigma and mobility, and sets the 
+  // twinning type based on the first pair of grains.
+  void updateMinMaxValues(Real & sigma_min, Real & sigma_max, Real & mob_min, Real & mob_max);
+  
+
   // Calculate GB energy based on the Read-Shockley model
   virtual Real calculatedGBEnergy(const MisorientationAngleData & misori_s);
 

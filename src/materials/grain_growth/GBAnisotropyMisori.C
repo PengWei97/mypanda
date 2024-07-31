@@ -97,46 +97,67 @@ GBAnisotropyMisori::computeGBProperties()
     std::fill(_sigma.begin(), _sigma.end(), std::vector<Real>(_op_num, 0.0));
     std::fill(_mob.begin(), _mob.end(), std::vector<Real>(_op_num, 0.0));
 
-    // Traverse to obtain the sigma_ij, mob_ij of the activation order parameters at the orthogonal point
-    for (unsigned int i = 0; i < grain_id_index.size() - 1; ++i)
-    {
-      auto angles_i = _euler.getEulerAngles(grain_id_index[i]);
-      for (unsigned int j = i+1; j < grain_id_index.size(); ++j)
-      {
-        auto angles_j = _euler.getEulerAngles(grain_id_index[j]);
-        auto & _sigma_ij = _sigma[var_index[i]][var_index[j]];
-        auto & _mob_ij = _mob[var_index[i]][var_index[j]];
-
-        // calculate misorientation angle
-        _misori_s = MisorientationAngleCalculator::calculateMisorientaion(angles_i, angles_j, _misori_s, _crystal_structure);
-
-        _sigma_ij = _gb_energy_anisotropy ? calculatedGBEnergy(_misori_s) : _GBsigma_HAGB; // && (time_current > 10.0)
-        _mob_ij = _gb_mobility_anisotropy ? calculatedGBMobility(_misori_s) : _GBmob_HAGB;
-
-        _sigma[var_index[j]][var_index[i]] =  _sigma_ij;
-        _mob[var_index[j]][var_index[i]] =  _mob_ij;
-
-        // Set the twinning type
-        if (i == 0 && j == 1)
-        {
-          _misori_angle[_qp] =  _misori_s._misor;
-          _twinning_type[_qp] = determineTwinningType(_misori_s);
-          sigma_min = sigma_max = _sigma_ij;
-          mob_min = mob_max = _mob_ij;
-        }
-
-        sigma_min = std::min(sigma_min, _sigma_ij);
-        sigma_max = std::max(sigma_max, _sigma_ij);
-        mob_min = std::min(mob_min, _mob_ij);
-        mob_max = std::max(mob_max, _mob_ij);
-      }
-    }
-
+    computeSigmaAndMobility(var_index, grain_id_index);
+    updateMinMaxValues(sigma_min, sigma_max, mob_min, mob_max);
     fillSymmetricProperties(sigma_min, sigma_max, mob_min, mob_max);
   }
 }
 
+void 
+GBAnisotropyMisori::computeSigmaAndMobility(const std::vector<unsigned int> & var_index,
+                                            const std::vector<unsigned int> & grain_id_index)
+{
+  for (unsigned int i = 0; i < grain_id_index.size() - 1; ++i)
+  {
+    auto angles_i = _euler.getEulerAngles(grain_id_index[i]);
+    for (unsigned int j = i + 1; j < grain_id_index.size(); ++j)
+    {
+      auto angles_j = _euler.getEulerAngles(grain_id_index[j]);
+      auto & _sigma_ij = _sigma[var_index[i]][var_index[j]];
+      auto & _mob_ij = _mob[var_index[i]][var_index[j]];
 
+      // Calculate misorientation angle
+      _misori_s = MisorientationAngleCalculator::calculateMisorientaion(angles_i, angles_j, _misori_s, _crystal_structure);
+
+      // Compute sigma_ij
+      _sigma_ij = _gb_energy_anisotropy ? calculatedGBEnergy(_misori_s) : _GBsigma_HAGB;
+
+      // Compute mob_ij
+      _mob_ij = _gb_mobility_anisotropy ? calculatedGBMobility(_misori_s) : _GBmob_HAGB;
+
+      _sigma[var_index[j]][var_index[i]] = _sigma_ij;
+      _mob[var_index[j]][var_index[i]] = _mob_ij;
+    }
+  }
+}
+
+void 
+GBAnisotropyMisori::updateMinMaxValues(Real &sigma_min, Real &sigma_max, Real &mob_min, Real &mob_max)
+{
+  for (unsigned int i = 0; i < _sigma.size(); ++i)
+  {
+    for (unsigned int j = i + 1; j < _sigma[i].size(); ++j)
+    {
+      const auto & _sigma_ij = _sigma[i][j];
+      const auto & _mob_ij = _mob[i][j];
+
+      // Set the twinning type for the first pair
+      if (i == 0 && j == 1)
+      {
+        _misori_angle[_qp] = _misori_s._misor;
+        _twinning_type[_qp] = determineTwinningType(_misori_s);
+        sigma_min = sigma_max = _sigma_ij;
+        mob_min = mob_max = _mob_ij;
+      }
+
+      // Update min/max sigma and mobility values
+      sigma_min = std::min(sigma_min, _sigma_ij);
+      sigma_max = std::max(sigma_max, _sigma_ij);
+      mob_min = std::min(mob_min, _mob_ij);
+      mob_max = std::max(mob_max, _mob_ij);
+    }
+  }
+}
 
 Real
 GBAnisotropyMisori::calculatedGBEnergy(const MisorientationAngleData & misori_s)
