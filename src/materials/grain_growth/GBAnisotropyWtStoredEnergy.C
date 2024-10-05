@@ -65,6 +65,7 @@ void
 GBAnisotropyWtStoredEnergy::calculatedGBMobilityWtRho(const Real & delta_rho, Real & mob_ij)
 {
   Real mob_ij_high = mob_ij * 10.0;
+  Real mob_temp = mob_ij;
 
   Real trans_misori_rho = 90; // 1/(\miu m)^2
 
@@ -72,9 +73,11 @@ GBAnisotropyWtStoredEnergy::calculatedGBMobilityWtRho(const Real & delta_rho, Re
   Real B = 5;
   Real n = 4;
 
-  if (delta_rho <= trans_misori_rho && delta_rho > 20.0)
-    mob_ij = mob_ij_high * ((1- std::exp(-B * std::pow( delta_rho / trans_misori_rho, n)))); // Eq.8
-  else if (delta_rho > trans_misori_rho)
-    mob_ij = mob_ij_high;
+  if (delta_rho <= trans_misori_rho)
+    mob_temp = mob_ij_high * ((1- std::exp(-B * std::pow( delta_rho / trans_misori_rho, n)))); // Eq.8
+  else
+    mob_temp = mob_ij_high;
 
+  if (mob_temp > mob_ij)
+    mob_ij = mob_temp;
 }
