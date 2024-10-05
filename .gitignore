@@ -1,4 +1,6 @@
-.libs
+*.inl
+*.gz
+*.libs
 *.la
 *.lo
 *.d
