@@ -111,18 +111,18 @@
 
 [Materials]
   [elasticity_tensor]
-    type = ComputeElasticityTensorCP # ComputeElasticTenosrCP
+    type = ComputeElasticTenosrCP
     C_ijkl = '1.684e5 1.214e5 1.214e5 1.684e5 1.214e5 1.684e5 0.754e5 0.754e5 0.754e5'
     fill_method = symmetric9
   []
   [stress]
-    type = ComputeMultipleCrystalPlasticityStress # ComputeMultiCPStress
+    type = ComputeMultiCPStress
     crystal_plasticity_models = 'trial_xtalpl'
     tan_mod_type = exact
     maximum_substep_iteration = 1
   []
   [trial_xtalpl]
-    type = CrystalPlasticityKalidindiUpdate # CPKalidiniUpdate
+    type = CPKalidiniUpdate
     number_slip_systems = 12
     slip_sys_file_name = input_slip_sys.inp
   []

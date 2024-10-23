@@ -10,7 +10,7 @@
 #include "CPKalidiniUpdate.h"
 #include "libmesh/int_range.h"
 
-registerMooseObject("SolidMechanicsApp", CPKalidiniUpdate);
+registerMooseObject("mypandaApp", CPKalidiniUpdate);
 
 InputParameters
 CPKalidiniUpdate::validParams()

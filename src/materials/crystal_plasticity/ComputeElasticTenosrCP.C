@@ -7,13 +7,13 @@
 //* Licensed under LGPL 2.1, please see LICENSE for details
 //* https://www.gnu.org/licenses/lgpl-2.1.html
 
-#include "ComputeElasticityTensorCP.h"
+#include "ComputeElasticTenosrCP.h"
 #include "RotationTensor.h"
 
-registerMooseObject("mypandaApp", ComputeElasticityTensorCP);
+registerMooseObject("mypandaApp", ComputeElasticTenosrCP);
 
 InputParameters
-ComputeElasticityTensorCP::validParams()
+ComputeElasticTenosrCP::validParams()
 {
   InputParameters params = ComputeElasticityTensor::validParams();
   params.addClassDescription("Compute an elasticity tensor for crystal plasticity.");
@@ -26,7 +26,7 @@ ComputeElasticityTensorCP::validParams()
   return params;
 }
 
-ComputeElasticityTensorCP::ComputeElasticityTensorCP(const InputParameters & parameters)
+ComputeElasticTenosrCP::ComputeElasticTenosrCP(const InputParameters & parameters)
   : ComputeElasticityTensor(parameters),
     _read_prop_user_object(isParamValid("read_prop_user_object")
                                ? &getUserObject<PropertyReadFile>("read_prop_user_object")
@@ -72,7 +72,7 @@ ComputeElasticityTensorCP::ComputeElasticityTensorCP(const InputParameters & par
 }
 
 void
-ComputeElasticityTensorCP::assignEulerAngles()
+ComputeElasticTenosrCP::assignEulerAngles()
 {
   if (_read_prop_user_object)
   {
@@ -93,7 +93,7 @@ ComputeElasticityTensorCP::assignEulerAngles()
 }
 
 void
-ComputeElasticityTensorCP::computeQpElasticityTensor()
+ComputeElasticTenosrCP::computeQpElasticityTensor()
 {
   // Properties assigned at the beginning of every call to material calculation
   // is required by the monolithic and user object versions. If those classes

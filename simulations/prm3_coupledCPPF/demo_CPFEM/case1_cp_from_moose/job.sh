@@ -1,0 +1,1 @@
+mpiexec -np 30 ~/projects/mypanda/mypanda-opt -i exception.i
