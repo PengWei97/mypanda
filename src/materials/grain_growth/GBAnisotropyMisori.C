@@ -37,7 +37,7 @@ GBAnisotropyMisori::validParams()
                                           "Name of Euler angle provider user object");
   params.addParam<bool>("gb_energy_anisotropy", false,
       "The GB energy anisotropy based on misorientation would be considered if true");
-  params.addParam<bool>("gb_mobility_anisotropy", true,
+  params.addParam<bool>("gb_mobility_anisotropy", false,
       "The GB mobility anisotropy would be considered if true");
 
   return params;

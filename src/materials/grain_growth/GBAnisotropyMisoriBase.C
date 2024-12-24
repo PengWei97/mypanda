@@ -92,7 +92,6 @@ GBAnisotropyMisoriBase::computeQpProperties()
     computerPFParameters();
 
     interpolatePFParams();
-
 }
 
 void
