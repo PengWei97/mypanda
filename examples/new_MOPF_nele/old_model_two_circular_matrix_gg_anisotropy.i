@@ -33,6 +33,7 @@ my_number_adaptivity = 3
     expression = 'gr2_area < 1000'
   [../]
 []
+
 [Variables]
   [./gr0] # for matrix grains
     order = FIRST
@@ -76,13 +77,14 @@ my_number_adaptivity = 3
   [../]
 []
 
+# [Variables]
+#   [./PolycrystalVariables]
+#   [../]
+# []
+
 # [ICs]
 #   [./PolycrystalICs]
-#     [./BicrystalCircleGrainIC] # SmoothCircleIC
-#       radius = 40
-#       x = 50
-#       y = 50
-#       int_width = ${my_wGB}
+#     [./Tricrystal2CircleGrainsIC]
 #     [../]
 #   [../]
 # []
