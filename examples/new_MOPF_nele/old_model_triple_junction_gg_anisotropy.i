@@ -1,9 +1,10 @@
 # Example: Simulation of grain growth in materials exhibiting GBAnisotropy material class;
 # The initial condition includes a triple junction, with the aim to study the influence of GB anisotropy on the grain growth procress.
+# sigma_ij = 0.25, miu_ij = 1.0; wGB = 1.6
 
 my_filename = 'case3_triple_junction_gg_old'
 my_wGB = 1.6
-my_number_adaptivity = 3
+my_number_adaptivity = 4
 # my_interval = 2
 
 [Mesh]
@@ -23,8 +24,8 @@ my_number_adaptivity = 3
   op_num = 3
   var_name_base = gr
   wGB = ${my_wGB}
-  length_scale = 1.0e-9
-  time_scale = 1.0e-9
+  length_scale = 1.0 # 1.0e-9
+  time_scale = 1.0 # 1.0e-9
 
   v = 'gr0 gr1 gr2' # Names of the grains
   theta1 = 90 # Angle the first grain makes at the triple junction
@@ -91,10 +92,11 @@ my_number_adaptivity = 3
 
 [Materials]
   [./CuGrGranisotropic]
-    type = GBAnisotropy
-    T = 600 # K
+    type = GBAnisotropyBenchmark
+    T = 1.0 # K
+    kb = 1.0
+    JtoeV = 1.0
 
-    # molar_volume_value = 7.11e-6 #Units:m^3/mol
     Anisotropic_GB_file_name = triple_junction_anisotropy.tex
     inclination_anisotropy = false # true
 
@@ -108,7 +110,6 @@ my_number_adaptivity = 3
     # Outputs the current time step
     type = TimestepSize
   [../]
-
   [./gr0_area]
     type = ElementIntegralVariablePostprocessor
     variable = gr0
@@ -141,23 +142,23 @@ my_number_adaptivity = 3
   petsc_options_iname = '-pc_type -pc_hypre_type -ksp_gmres_restart'
   petsc_options_value = 'hypre boomeramg 31'
 
-  l_max_its = 20
+  l_max_its = 10
   l_tol = 1e-4
   nl_max_its = 10
   nl_rel_tol = 1e-9
 
-  # end_time = 20
-  num_steps = 10
+  # end_time = 1e3
+  num_steps = 3
 
   [./TimeStepper]
     type = IterationAdaptiveDT
-    dt = 2.5e-2
+    dt = 2.5e-1
     growth_factor = 1.2
     cutback_factor = 0.8
     optimal_iterations = 8
   [../]
   [./Adaptivity]
-    initial_adaptivity = 3 # 8 
+    initial_adaptivity = 4 # 8 
     cycles_per_step = 2 # The number of adaptivity cycles per step
     refine_fraction = 0.5 # The fraction of elements or error to refine.
     coarsen_fraction = 0.05
