@@ -1,3 +1,8 @@
+# 参考资料
+1. Moelans, N., Blanpain, B. & Wollants, P. Quantitative analysis of grain boundary properties in a generalized phase field model for grain growth in anisotropic systems. Phys. Rev. B 78, 024113 (2008).
+2. Moelans, N. New phase-field model for polycrystalline systems with anisotropic grain boundary properties. Mater. Des. 217, 110592 (2022).
+
+
 # 文献配置
 
 # input file
@@ -14,10 +19,6 @@
 3. new_model_ploycrystal_gg_anisotropy.i
 
 
-0.15 0.15 0.40
-0.15 0.15 0.40
-0.40 0.40 0.15
-
-0.25 0.25 0.25
-0.25 0.25 0.25
-0.25 0.25 0.25
+# TODO
+1. 复现 MD.2008 Nele Moelans 中的算例，并衡量是否采用新模型；
+2. 创建 new_* 系列的输入文件；
