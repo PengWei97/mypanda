@@ -7,8 +7,8 @@ my_filename = 'case4_circular_gg_2d_spilt'
 [Mesh]
   type = GeneratedMesh
   dim = 2
-  nx = 20
-  ny = 10
+  nx = 100
+  ny = 50
   xmin = 0
   xmax = 200
   ymin = 0
@@ -215,12 +215,12 @@ my_filename = 'case4_circular_gg_2d_spilt'
 [Executioner]
   type = Transient
 
-  solve_type = PJFNK
-  petsc_options_iname = '-pc_type  -snes_type -ksp_gmres_restart'
-  petsc_options_value = 'bjacobi vinewtonrsls 31'
+  # solve_type = PJFNK
+  # petsc_options_iname = '-pc_type  -snes_type -ksp_gmres_restart'
+  # petsc_options_value = 'bjacobi vinewtonrsls 31'
 
   # scheme = bdf2
-  # solve_type = NEWTON
+  solve_type = NEWTON
   # petsc_options_iname = '-pc_type -pc_hypre_type -ksp_gmres_restart'
   # petsc_options_value = 'hypre boomeramg 31'
 
@@ -229,10 +229,10 @@ my_filename = 'case4_circular_gg_2d_spilt'
   nl_max_its = 10
   nl_rel_tol = 1e-9
 
-  end_time = 1.0e4
+  end_time = 1000
   # num_steps = 3
   # dt = 0.05
-  # dtmax = 0.2
+  dtmax = 1.0
 
   [./TimeStepper]
     type = IterationAdaptiveDT
@@ -241,13 +241,13 @@ my_filename = 'case4_circular_gg_2d_spilt'
     cutback_factor = 0.8
     optimal_iterations = 8
   [../]
-  [./Adaptivity]
-    initial_adaptivity = 3 # 8 
-    cycles_per_step = 2 # The number of adaptivity cycles per step
-    refine_fraction = 0.5 # The fraction of elements or error to refine.
-    coarsen_fraction = 0.05
-    max_h_level = 4
-  [../]
+  # [./Adaptivity]
+  #   initial_adaptivity = 3 # 8 
+  #   cycles_per_step = 2 # The number of adaptivity cycles per step
+  #   refine_fraction = 0.5 # The fraction of elements or error to refine.
+  #   coarsen_fraction = 0.05
+  #   max_h_level = 4
+  # [../]
 []
 
 [Outputs]

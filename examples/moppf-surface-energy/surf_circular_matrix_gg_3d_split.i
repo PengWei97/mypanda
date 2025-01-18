@@ -2,14 +2,14 @@
 # reference-1: Verma, M., & Mukherjee, R. (2021). Grain growth stagnation in solid state thin films: A phase-field study. Journal of Applied Physics, 130(2).
 # Data: 2025-01-08
 
-my_filename = 'case4_circular_gg_3d_spilt'
+my_filename = 'c4_circ_gg_3d'
 
 [Mesh]
   type = GeneratedMesh
   dim = 3
-  nx = 10
-  ny = 10
-  nz = 4
+  nx = 100
+  ny = 100
+  nz = 40
   xmin = 0
   xmax = 100
   ymin = 0
@@ -17,9 +17,26 @@ my_filename = 'case4_circular_gg_3d_spilt'
   zmin = 0
   zmax = 40
   elem_type = HEX8
-
-  parallel_type = distributed
+ 
+  parallel_type = distributed #  replicated distributed
 []
+
+# [Mesh]
+#   type = GeneratedMesh
+#   dim = 3
+#   nx = 10
+#   ny = 10
+#   nz = 4
+#   xmin = 0
+#   xmax = 100
+#   ymin = 0
+#   ymax = 100
+#   zmin = 0
+#   zmax = 40
+#   elem_type = HEX8
+
+#   parallel_type = distributed
+# []
 
 [Variables]
   [./PolycrystalVariables]
@@ -227,12 +244,12 @@ my_filename = 'case4_circular_gg_3d_spilt'
 [Executioner]
   type = Transient
 
-  solve_type = PJFNK
-  petsc_options_iname = '-pc_type  -snes_type -ksp_gmres_restart'
-  petsc_options_value = 'bjacobi vinewtonrsls 31'
+  # solve_type = PJFNK
+  # petsc_options_iname = '-pc_type  -snes_type -ksp_gmres_restart'
+  # petsc_options_value = 'bjacobi vinewtonrsls 31'
 
   # scheme = bdf2
-  # solve_type = NEWTON
+  solve_type = NEWTON
   # petsc_options_iname = '-pc_type -pc_hypre_type -ksp_gmres_restart'
   # petsc_options_value = 'hypre boomeramg 31'
 
@@ -241,31 +258,34 @@ my_filename = 'case4_circular_gg_3d_spilt'
   nl_max_its = 10
   nl_rel_tol = 1e-9
 
-  end_time = 1.0
+  end_time = 1.0e2
   # num_steps = 3
   # dt = 0.05
   # dtmax = 0.2
 
   [./TimeStepper]
     type = IterationAdaptiveDT
-    dt = 0.001
+    dt = 1.0e-5
     growth_factor = 1.2
     cutback_factor = 0.8
     optimal_iterations = 8
   [../]
-  [./Adaptivity]
-    initial_adaptivity = 3 # 8 
-    cycles_per_step = 2 # The number of adaptivity cycles per step
-    refine_fraction = 0.5 # The fraction of elements or error to refine.
-    coarsen_fraction = 0.05
-    max_h_level = 4
-  [../]
+  # [./Adaptivity]
+  #   initial_adaptivity = 4 # 8 
+  #   cycles_per_step = 2 # The number of adaptivity cycles per step
+  #   refine_fraction = 0.5 # The fraction of elements or error to refine.
+  #   coarsen_fraction = 0.05
+  #   max_h_level = 4
+  # [../]
 []
 
 [Outputs]
   [./my_exodus]
     file_base = ./ex_${my_filename}/out_${my_filename} 
-    type = Nemesis
+    type = Nemesis # Nemesis Exodus
+    # append_date = true
+    # append_date_format = '%d-%R'
+    # sequence = true
     # time_step_interval = 10 # The interval at which time steps are output
     # sync_times = '10 50 100 500 1000 5000 10000 50000 100000'
     # sync_only = true
