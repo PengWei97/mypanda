@@ -1,42 +1,20 @@
-# This model was created to replicate the results of reference-1;
-# reference-1: Verma, M., & Mukherjee, R. (2021). Grain growth stagnation in solid state thin films: A phase-field study. Journal of Applied Physics, 130(2).
-# Data: 2025-01-08
+# 双晶模拟，不符合预期
 
-my_filename = 'c4_circ_gg_3d'
+my_filename = 'case4_circular_gg_noBounds_3nd'
 
 [Mesh]
   type = GeneratedMesh
-  dim = 3
-  nx = 100
-  ny = 100
-  nz = 40
+  dim = 2
+  nx = 20
+  ny = 10
   xmin = 0
-  xmax = 100
+  xmax = 200
   ymin = 0
   ymax = 100
-  zmin = 0
-  zmax = 40
-  elem_type = HEX8
- 
-  parallel_type = distributed #  replicated distributed
+  elem_type = QUAD4 # HEX8
+
+  parallel_type = distributed
 []
-
-# [Mesh]
-#   type = GeneratedMesh
-#   dim = 3
-#   nx = 10
-#   ny = 10
-#   nz = 4
-#   xmin = 0
-#   xmax = 100
-#   ymin = 0
-#   ymax = 100
-#   zmin = 0
-#   zmax = 40
-#   elem_type = HEX8
-
-#   parallel_type = distributed
-# []
 
 [Variables]
   [./PolycrystalVariables]
@@ -44,57 +22,58 @@ my_filename = 'c4_circ_gg_3d'
     op_num = 2
   [../]
   [./cv]
-    # order = THIRD
-    # family = HERMITE
-
-    order = FIRST
-    family = LAGRANGE
-  [../]
-  [./w] # chemical potential
-    order = FIRST
-    family = LAGRANGE
+    order = THIRD
+    family = HERMITE
   [../]
 []
 
+# [Bounds]
+#   [./c_upper_bound]
+#     type = ConstantBounds
+#     variable = bounds_dummy
+#     bounded_variable = cv
+#     bound_type = upper
+#     bound_value = 1.0
+#   [../]
+#   [./c_lower_bound]
+#     type = ConstantBounds
+#     variable = bounds_dummy
+#     bounded_variable = cv
+#     bound_type = lower
+#     bound_value = 0.0
+#   [../]
+# []
+
+[Functions]
+  [./function_gr0]
+    type = ParsedFunction
+    expression = 'if((x<50 | x > 150) & (y < 80), 1.0, 0.0)'
+  [../]
+[]
 
 [ICs]
   [./gr0]
-    type = SmoothCircleIC
+    type = FunctionIC
     variable = gr0
-    x1 = 50
-    y1 = 50
-    z1 = 20
-
-    radius = 30
-    invalue = 0.0
-    outvalue = 1.0
-    z_threshold = 30
-    3D_spheres = false
-    zero_gradient = false
+    function = function_gr0
   [../]
   [./gr1]
-    type = SmoothCircleIC
+    type = BoundingBoxIC
     variable = gr1
     x1 = 50
-    y1 = 50
-    z1 = 20
-
-    radius = 30
-    invalue = 1.0
-    outvalue = 0.0
-    z_threshold = 30
-    3D_spheres = false
-    zero_gradient = false
+    y1 = 0
+    x2 = 150
+    y2 = 80
+    inside = 1.0
+    outside = 0.0
   [../]
   [./cv]
     type = BoundingBoxIC
     variable = cv
     x1 = 0
-    y1 = 0
-    z1 = 30
-    x2 = 100
+    y1 = 80
+    x2 = 200
     y2 = 100
-    z2 = 40
 
     inside = 1.0
     outside = 0.0
@@ -116,6 +95,10 @@ my_filename = 'c4_circ_gg_3d'
     family = LAGRANGE
   [../]
   [./var_indices]
+    order = FIRST
+    family = LAGRANGE
+  [../]
+  [./bounds_dummy]
     order = FIRST
     family = LAGRANGE
   [../]
@@ -159,21 +142,20 @@ my_filename = 'c4_circ_gg_3d'
   [../]
 
   [./cvdot]
-    type = CoupledTimeDerivative
-    variable = w
-    v = cv
+    type = TimeDerivative
+    variable = cv
   [../]
   [./cv_bulk]
-    type = SplitCHParsed
+    type = CahnHilliard
     variable = cv
     f_name = f_total
-    kappa_name = kappa_c
-    w = w
     coupled_variables = 'gr0 gr1'
+    mob_name = M
   [../]
   [./cv_int]
-    type = SplitCHWRes
-    variable = w
+    type = CHInterface
+    variable = cv
+    kappa_name = kappa_c
     mob_name = M
   [../]
 []
@@ -234,22 +216,22 @@ my_filename = 'c4_circ_gg_3d'
   [../]
 []
 
-[Preconditioning]
+[Preconditioning] # 预处理器，用于加速求解线性系统的收敛
   [./SMP]
-    type = SMP
+    type = SMP # 表示使用对称多处理（SMP）并行算法。该预处理器设计用于多核处理器上，以优化内存访问和并行计算，提高求解效率。
     full = true
   [../]
 []
 
 [Executioner]
-  type = Transient
+  type = Transient # 使用瞬态求解器
 
-  # solve_type = PJFNK
-  # petsc_options_iname = '-pc_type  -snes_type -ksp_gmres_restart'
-  # petsc_options_value = 'bjacobi vinewtonrsls 31'
+  solve_type = PJFNK
+  petsc_options_iname = '-pc_type  -snes_type -ksp_gmres_restart'
+  petsc_options_value = 'bjacobi vinewtonrsls 31'
 
   # scheme = bdf2
-  solve_type = NEWTON
+  # solve_type = NEWTON
   # petsc_options_iname = '-pc_type -pc_hypre_type -ksp_gmres_restart'
   # petsc_options_value = 'hypre boomeramg 31'
 
@@ -258,34 +240,34 @@ my_filename = 'c4_circ_gg_3d'
   nl_max_its = 10
   nl_rel_tol = 1e-9
 
-  end_time = 1.0e2
+  end_time = 10.0
   # num_steps = 3
   # dt = 0.05
   # dtmax = 0.2
 
   [./TimeStepper]
     type = IterationAdaptiveDT
-    dt = 1.0e-5
+    dt = 0.001
     growth_factor = 1.2
     cutback_factor = 0.8
     optimal_iterations = 8
   [../]
-  # [./Adaptivity]
-  #   initial_adaptivity = 4 # 8 
-  #   cycles_per_step = 2 # The number of adaptivity cycles per step
-  #   refine_fraction = 0.5 # The fraction of elements or error to refine.
-  #   coarsen_fraction = 0.05
-  #   max_h_level = 4
-  # [../]
+  [./Adaptivity]
+    initial_adaptivity = 3 # 8 
+    cycles_per_step = 2 # The number of adaptivity cycles per step
+    refine_fraction = 0.5 # The fraction of elements or error to refine.
+    coarsen_fraction = 0.05
+    max_h_level = 4
+  [../]
 []
 
 [Outputs]
   [./my_exodus]
     file_base = ./ex_${my_filename}/out_${my_filename} 
-    type = Nemesis # Nemesis Exodus
-    # append_date = true
-    # append_date_format = '%d-%R'
-    # sequence = true
+    type = Nemesis
+    write_hdf5 = false
+    append_date = true
+    append_date_format = '%d-%R'
     time_step_interval = 10 # The interval at which time steps are output
     # sync_times = '10 50 100 500 1000 5000 10000 50000 100000'
     # sync_only = true
