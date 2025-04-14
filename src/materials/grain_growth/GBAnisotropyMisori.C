@@ -22,14 +22,14 @@ GBAnisotropyMisori::validParams()
   params.addParam<MooseEnum>("crystal_structure", crystal_structures, "The type of crystal structure");
 
   // Added parameters for twin boundary energy and mobility
-  params.addParam<Real>("TT1_sigma",  0.9, "Twin boundary energy for {10-12} tensile twin (type 1) based on MD, J/m^2");
-  params.addParam<Real>("CT1_sigma",  0.9, "Twin boundary energy for {11-22} compresssion twin (type 1) based on MD, J/m^2");  
-  params.addParam<Real>("TT1_mob", 2.5e-6, "Twin boundary mobility for {10-12} tensile twin (type 1) based on experiment, m^4/(J*s)");
-  params.addParam<Real>("CT1_mob", 2.5e-6, "Twin boundary mobility for {11-22} compresssion twin (type 1) based on experiment, m^4/(J*s)");
-  params.addParam<Real>("Sigma9_sigma",  0.9, "Twin boundary energy for {10-12} tensile twin (type 1) based on MD, J/m^2");
-  params.addParam<Real>("Sigma3_sigma",  0.9, "Twin boundary energy for {11-22} compresssion twin (type 1) based on MD, J/m^2");  
-  params.addParam<Real>("Sigma9_mob", 2.5e-6, "Twin boundary mobility for {10-12} tensile twin (type 1) based on experiment, m^4/(J*s)");
-  params.addParam<Real>("Sigma3_mob", 2.5e-6, "Twin boundary mobility for {11-22} compresssion twin (type 1) based on experiment, m^4/(J*s)");
+  params.addParam<Real>("TT1_sigma",  0.9, "Twin boundary energy for {10-12} tensile twin (type 1) based on MD for HCP, J/m^2");
+  params.addParam<Real>("CT1_sigma",  0.9, "Twin boundary energy for {11-22} compresssion twin (type 1) based on MD for HCP, J/m^2");  
+  params.addParam<Real>("TT1_mob", 2.5e-6, "Twin boundary mobility for {10-12} tensile twin (type 1) based on experiment for HCP, m^4/(J*s)");
+  params.addParam<Real>("CT1_mob", 2.5e-6, "Twin boundary mobility for {11-22} compresssion twin (type 1) based on experiment for HCP, m^4/(J*s)");
+  params.addParam<Real>("Sigma3_sigma",  0.9, "Twin boundary energy for Sigma 3 based on MD for FCC, J/m^2");
+  params.addParam<Real>("Sigma9_sigma",  0.9, "Twin boundary energy for Sigma 9 based on MD for FCC, J/m^2");  
+  params.addParam<Real>("Sigma3_mob", 2.5e-6, "Twin boundary mobility for Sigma 3 based on experiment for FCC, m^4/(J*s)");
+  params.addParam<Real>("Sigma9_mob", 2.5e-6, "Twin boundary mobility for Sigma 9 in FCC on experiment for FCC, m^4/(J*s)");
 
   params.addRequiredParam<UserObjectName>(
       "grain_tracker", "Name of GrainTracker user object that provides Grain ID according to element ID");
@@ -39,6 +39,10 @@ GBAnisotropyMisori::validParams()
       "The GB energy anisotropy based on misorientation would be considered if true");
   params.addParam<bool>("gb_mobility_anisotropy", false,
       "The GB mobility anisotropy would be considered if true");
+  params.addParam<bool>("is_select_grain_id", false,
+        "Grain boundary mobility is assigned a high value based on the selected grain");
+
+  params.addParam<Real>("execution_time", 2.0, "Time to perform grain boundary anisotropy");
 
   return params;
 }
@@ -51,6 +55,7 @@ GBAnisotropyMisori::GBAnisotropyMisori(const InputParameters & parameters)
     _CT1_sigma(getParam<Real>("CT1_sigma")),
     _TT1_mob(getParam<Real>("TT1_mob")),
     _CT1_mob(getParam<Real>("CT1_mob")),
+
     _Sigma3_sigma(getParam<Real>("Sigma3_sigma")),
     _Sigma9_sigma(getParam<Real>("Sigma9_sigma")),
     _Sigma3_mob(getParam<Real>("Sigma3_mob")),
@@ -60,9 +65,11 @@ GBAnisotropyMisori::GBAnisotropyMisori(const InputParameters & parameters)
     _euler(getUserObject<EulerAngleProvider>("euler_angle_provider")),
     _gb_energy_anisotropy(getParam<bool>("gb_energy_anisotropy")),
     _gb_mobility_anisotropy(getParam<bool>("gb_mobility_anisotropy")),
+    _is_select_grain_id(getParam<bool>("is_select_grain_id")),   
     _misori_angle(declareProperty<Real>("misori_angle")),
     _twinning_type(declareProperty<Real>("twinning_type")),
-    _delta_rho(declareProperty<Real>("delta_rho"))
+    _delta_rho(declareProperty<Real>("delta_rho")),
+    _execution_time(getParam<Real>("execution_time"))
 {
 }
 
@@ -89,21 +96,54 @@ GBAnisotropyMisori::computeGBProperties()
       grain_id_index.push_back(grain_id);
     }
   }
-   
+
   Real sigma_min = _GBsigma_HAGB, sigma_max = _GBsigma_HAGB;
   Real mob_min = _GBmob_HAGB, mob_max = _GBmob_HAGB;
 
   // When at grain boundaries or junction
-  if (grain_id_index.size() > 1)
+  if (grain_id_index.size() > 1 && time_current > _execution_time) //  && time_current > 2.0
   {
     std::fill(_sigma.begin(), _sigma.end(), std::vector<Real>(_op_num, 0.0));
     std::fill(_mob.begin(), _mob.end(), std::vector<Real>(_op_num, 0.0));
 
     computeSigmaAndMobility(var_index, grain_id_index);
+    if (_is_select_grain_id)
+      computeHighMobilityForSelectGrain(var_index, grain_id_index);
+
     updateMinMaxValues(sigma_min, sigma_max, mob_min, mob_max);
     fillSymmetricProperties(sigma_min, sigma_max, mob_min, mob_max);
   }
 }
+
+void
+GBAnisotropyMisori::computeHighMobilityForSelectGrain(const std::vector<unsigned int> & var_index,
+                                                      const std::vector<unsigned int> & grain_id_index)
+{
+  const std::unordered_set<unsigned int> select_grain_ids = {269,95,343};
+
+  for (unsigned int i = 0; i < grain_id_index.size() - 1; ++i)
+  {
+    auto const & grain_i = grain_id_index[i];
+    bool grain_i_in_select = (select_grain_ids.find(grain_i) != select_grain_ids.end());
+
+    for (unsigned int j = i + 1; j < grain_id_index.size(); ++j)
+    {
+      auto const & grain_j = grain_id_index[j];
+      bool grain_j_in_select = (select_grain_ids.find(grain_j) != select_grain_ids.end());
+
+      // 如果 grain_i 和 grain_j 中只有一个在 select_grain_ids 中
+      if ((grain_i != 0 && grain_j != 0) && ((grain_i_in_select && !grain_j_in_select) || (!grain_i_in_select && grain_j_in_select)))
+      {
+        // 更新迁移率
+        _mob[var_index[i]][var_index[j]] = _GBmob_HAGB * 10;
+        _mob[var_index[j]][var_index[i]] = _GBmob_HAGB * 10; // 对称更新
+
+        // _sigma[var_index[i]][var_index[j]] = _GBsigma_HAGB * 0.10;
+        // _sigma[var_index[j]][var_index[i]] = _GBsigma_HAGB * 0.10; // 对称更新
+      }
+    }
+  }
+}                                            
 
 void 
 GBAnisotropyMisori::computeSigmaAndMobility(const std::vector<unsigned int> & var_index,
@@ -228,7 +268,7 @@ GBAnisotropyMisori::determineTwinningType(const MisorientationAngleData & misori
       case TwinType::TT1_HCP: return 1.0;
       case TwinType::CT1_HCP: return 2.0;
       case TwinType::Sigma3_FCC: return 3.0;
-      case TwinType::Sigma9_FCC: return 4.0;
+      case TwinType::Sigma9_FCC: return 5.0;
       default: return 0.0; // GB
     }
   }

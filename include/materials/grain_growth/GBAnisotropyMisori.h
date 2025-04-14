@@ -34,6 +34,10 @@ protected:
   // Compute sigma_ij and mob_ij for specific grain boundaries
   virtual void computeGBProperties() override;
 
+  // Computes the sigma_ij and mob_ij values for selected grains
+  void computeHighMobilityForSelectGrain(const std::vector<unsigned int> & var_index,
+                                         const std::vector<unsigned int> & grain_id_index);
+
   // Computes the sigma_ij and mob_ij values for each pair of active grains.
   virtual void computeSigmaAndMobility(const std::vector<unsigned int> & var_index,
                                        const std::vector<unsigned int> & grain_id_index);
@@ -41,7 +45,6 @@ protected:
   // updates the min and max values for sigma and mobility, and sets the 
   // twinning type based on the first pair of grains.
   void updateMinMaxValues(Real & sigma_min, Real & sigma_max, Real & mob_min, Real & mob_max);
-  
 
   // Calculate GB energy based on the Read-Shockley model
   virtual Real calculatedGBEnergy(const MisorientationAngleData & misori_s);
@@ -70,6 +73,7 @@ protected:
   const Real _Sigma9_sigma;
   const Real _Sigma3_mob;
   const Real _Sigma9_mob;
+  const Real _execution_time;
 
   // GrainTracker user object for acquiring grain IDs
   const GrainTracker & _grain_tracker;
@@ -79,7 +83,8 @@ protected:
 
   // Flags to consider GB energy and mobility anisotropy
   const bool _gb_energy_anisotropy;
-  const bool _gb_mobility_anisotropy;    
+  const bool _gb_mobility_anisotropy;
+  const bool _is_select_grain_id;
 
   // Material properties to store misorientation angle and twinning type
   MaterialProperty<Real> & _misori_angle;
