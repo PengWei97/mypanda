@@ -1,2 +1,0 @@
-mpiexec -np 30 ~/projects/mypanda/mypanda-opt -i gg_2D_graintracker_recover1.i > 01.log & 
-mpiexec -np 30 ~/projects/mypanda/mypanda-opt -i gg_2D_graintracker_recover1.i --recover gg_2D_graintracker_recover_cp/LATEST > 02.log & 
