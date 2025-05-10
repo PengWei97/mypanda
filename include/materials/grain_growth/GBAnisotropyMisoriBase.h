@@ -48,6 +48,7 @@ protected:
   const Real _Q_HAGB;
   const Real _wGB;
   const Real _scale_factor_matrix;
+  const bool _is_gb_isotropy;
 
   const FileName _Anisotropic_GB_file_name;
 

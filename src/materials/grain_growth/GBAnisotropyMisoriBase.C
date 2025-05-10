@@ -26,6 +26,7 @@ GBAnisotropyMisoriBase::validParams()
   params.addParam<Real>("scale_factor_matrix", 1.0e-2,"scale factor for matrix sigma or mob");
   params.addRequiredCoupledVarWithAutoBuild(
       "v", "var_name_base", "op_num", "Array of coupled variables");
+  params.addParam<bool>("is_gb_isotropy", false, "The GB isotropy would be considered if true");
   return params;
 }
 
@@ -49,7 +50,8 @@ GBAnisotropyMisoriBase::GBAnisotropyMisoriBase(const InputParameters & parameter
     _mu_qp(0.0),
     _op_num(coupledComponents("v")),
     _vals(coupledValues("v")),
-    _grad_vals(coupledGradients("v"))
+    _grad_vals(coupledGradients("v")),
+    _is_gb_isotropy(getParam<bool>("is_gb_isotropy"))
 {
   // reshape vectors
   _sigma.resize(_op_num);
@@ -76,22 +78,26 @@ GBAnisotropyMisoriBase::computeQpProperties()
   std::fill(_mob.begin(), _mob.end(), std::vector<Real>(_op_num, _GBmob_HAGB));
   std::fill(_Q.begin(), _Q.end(), std::vector<Real>(_op_num, _Q_HAGB));
 
-  // if (_fe_problem.time())
-    computeGBProperties(); // calculated sigma and mob
+  computeGBProperties(); // calculated sigma and mob
 
-  // convert unit
-  for (unsigned int m = 0; m < _op_num - 1; ++m)
-    for (unsigned int n = m + 1; n < _op_num; ++n)
-    {
-      _sigma[m][n] *= _JtoeV * (_length_scale * _length_scale); // eV/nm^2
+  if (_is_gb_isotropy)
+    computerPFGBIsotropy();
+  else
+  {
+    // convert unit
+    for (unsigned int m = 0; m < _op_num - 1; ++m)
+      for (unsigned int n = m + 1; n < _op_num; ++n)
+      {
+        _sigma[m][n] *= _JtoeV * (_length_scale * _length_scale); // eV/nm^2
 
-      _mob[m][n] *= _time_scale / (_JtoeV * (_length_scale * _length_scale * _length_scale *
-                                             _length_scale)); // Convert to nm^4/(eV*ns);
-    } 
+        _mob[m][n] *= _time_scale / (_JtoeV * (_length_scale * _length_scale * _length_scale *
+                                              _length_scale)); // Convert to nm^4/(eV*ns);
+      } 
 
-    computerPFParameters();
+      computerPFParameters();
 
-    interpolatePFParams();
+      interpolatePFParams();
+  }
 }
 
 void
