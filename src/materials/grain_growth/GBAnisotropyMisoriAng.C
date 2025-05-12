@@ -25,6 +25,8 @@ GBAnisotropyMisoriAng::GBAnisotropyMisoriAng(const InputParameters & parameters)
   _euler(getUserObject<EulerAngleProvider>("euler_angle_provider")),
   _gb_energy_anisotropy(getParam<bool>("gb_energy_anisotropy")),
   _gb_mobility_anisotropy(getParam<bool>("gb_mobility_anisotropy")),
+  _B(5),
+  _n(4),
   _misori_angle(declareProperty<Real>("misori_angle"))
 {
 }
@@ -35,6 +37,8 @@ GBAnisotropyMisoriAng::computeGBProperties()
   auto & time_current = _fe_problem.time();
 
   _misori_angle[_qp] = 0.0;
+  
+  initOthersMaterialProperties();
 
   // get the GB location based on the GrainTracker in the quadrature point
   const auto & op_to_grains = _grain_tracker.getVarToFeatureVector(_current_elem->id()); 
@@ -91,6 +95,8 @@ void GBAnisotropyMisoriAng::computeSigmaAndMobility(const std::vector<unsigned i
 
             _misori_angle[_qp] = _misori_s._misor;
 
+            calculateOthersMaterialProperties(grain_id_index[i], grain_id_index[j]);
+
             Real sigma = _gb_energy_anisotropy ? calculateGBEnergy(_misori_s) : _GBsigma_HAGB;
             Real mobility = _gb_mobility_anisotropy ? calculateGBMobility(_misori_s) : _GBmob_HAGB;
 
@@ -126,12 +132,11 @@ GBAnisotropyMisoriAng::calculateGBMobility(const MisorientationAngleData & misor
 {
   const Real misori_angle = misori_s._misor;
   const Real trans_misori_angle_HAGB = 15.0;
-  const Real B = 5, n = 4;
 
   if (misori_angle <= 1.0)
-    return _GBmob_HAGB * ((1-std::exp(-B*std::pow(2.0/trans_misori_angle_HAGB,n))));
+    return _GBmob_HAGB * ((1-std::exp(-_B*std::pow(2.0/trans_misori_angle_HAGB,_n))));
   else if (misori_angle <= trans_misori_angle_HAGB)
-    return _GBmob_HAGB * (1 - std::exp(-B * std::pow(misori_angle / trans_misori_angle_HAGB, n)));
+    return _GBmob_HAGB * (1 - std::exp(-_B * std::pow(misori_angle / trans_misori_angle_HAGB, _n)));
 
   return _GBmob_HAGB;
 }
