@@ -11,8 +11,6 @@
 
 // MOOSE includes
 #include "Assembly.h"
-#include "FeatureFloodCount.h"
-#include "GrainTrackerInterface.h"
 #include "MooseMesh.h"
 #include "MooseVariable.h"
 #include "SystemBase.h"

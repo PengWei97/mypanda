@@ -12,6 +12,8 @@
 #include "GeneralVectorPostprocessor.h"
 #include "MooseVariableDependencyInterface.h"
 #include "BoundaryRestrictable.h"
+#include "FeatureFloodCount.h"
+#include "GrainTrackerInterface.h"
 
 #include <array>
 
