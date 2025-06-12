@@ -1,3 +1,5 @@
+inp*.i
+job*.sh
 *.gz
 *.tgz
 *.inl

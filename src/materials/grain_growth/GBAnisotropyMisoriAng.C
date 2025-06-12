@@ -62,8 +62,8 @@ GBAnisotropyMisoriAng::computeGBProperties()
   if (grain_id_index.size() > 1 && time_current > _execution_time)
   {
       // If there is anisotropy, initialize with 0.0; otherwise, use the HAGB values
-      const Real init_sigma = _gb_energy_anisotropy || _gb_mobility_anisotropy ? 0.0 : _GBsigma_HAGB;
-      const Real init_mob = _gb_energy_anisotropy || _gb_mobility_anisotropy ? 0.0 : _GBmob_HAGB;
+      const Real init_sigma = _gb_energy_anisotropy ? 0.0 : _GBsigma_HAGB;
+      const Real init_mob = _gb_mobility_anisotropy ? 0.0 : _GBmob_HAGB;
 
       // Create an initial vector filled with the appropriate values
       std::fill(_sigma.begin(), _sigma.end(), std::vector<Real>(_op_num, init_sigma));

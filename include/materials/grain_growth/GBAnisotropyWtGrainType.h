@@ -24,9 +24,24 @@ public:
 protected:
   virtual void computeGBProperties() override;
 
+  void computeSigmaAndMobility(const std::vector<unsigned int> & var_index,
+                               const std::vector<unsigned int> & grain_ids,
+                               Real & sigma_min, Real & sigma_max,
+                               Real & mob_min, Real & mob_max);
+
+  Real calculateGBEnergy(const Real & gi, const Real & gj);
+  
+  Real calculateGBMobility(const Real & gi, const Real & gj);
+
+  void fillSymmetricProperties(Real sigma_min, Real sigma_max, Real mob_min, Real mob_max);
+
   /// References to user objects for tracking grain information.
-  const GrainTracker & _grain_tracker;
   const EBSDReader & _ebsd_reader;
+  const GrainTracker & _grain_tracker;
+  const Real _select_grain_type;
+  const bool _gb_energy_anisotropy;
+  const bool _gb_mobility_anisotropy;
+  const Real _execution_time;
 
   /// Material property that stores the type of grain at each quadrature point.
   MaterialProperty<Real> & _grain_type;
