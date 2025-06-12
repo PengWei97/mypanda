@@ -11,7 +11,10 @@ public:
 
   // Constructor with input parameters.
   EBSDReaderMaterialProperty(const InputParameters & parameters);
-  
+
+  // Gets the initial dislocation density for a specified grain.
+  Real getRhoInit(unsigned int grain_id) const;
+
   // Gets the time-evolved dislocation density for a specified grain.
   Real getRhoWtTime(unsigned int grain_id) const;
 

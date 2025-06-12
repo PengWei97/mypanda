@@ -19,7 +19,8 @@ public:
 
 protected:
   virtual void computeQpProperties() override;
-
+  virtual Real getRhoWtTime(const unsigned int & grain_id) const;
+  
   const unsigned int _op_num; // total number of grains
   const std::vector<const VariableValue *> _vals; // order parameter values
 
@@ -38,4 +39,5 @@ protected:
   // Material properties
   MaterialProperty<Real> & _rho_eff; // the average effective dislocation density
   std::vector<MaterialProperty<Real> *> _D_stored_energy;
+  MaterialProperty<Real> & _feature_id;
 };

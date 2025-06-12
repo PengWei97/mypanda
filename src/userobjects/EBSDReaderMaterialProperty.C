@@ -10,7 +10,7 @@ EBSDReaderMaterialProperty::validParams()
   params.addParam<bool>("is_concurrent_recovery", false, "Enable concurrent recovery mechanism.");
   params.addParam<Real>("rho_end", 2.10e12, "Dislocation density after long-term concurrent recovery");
   params.addParam<Real>("a_rho", 4.6e-4, "Evolution coefficient during medium time recovery");
-  params.addParam<Real>("rho_default", 2.0e15, "Dislocation density at the beginning of simulation"); 
+  params.addParam<Real>("rho_default", 2.0e15, "Dislocation density at the beginning of simulation");
   return params;
 }
 
@@ -24,28 +24,32 @@ EBSDReaderMaterialProperty::EBSDReaderMaterialProperty(const InputParameters & p
 }
 
 Real
-EBSDReaderMaterialProperty::getRhoWtTime(unsigned int grain_id) const
+EBSDReaderMaterialProperty::getRhoInit(unsigned int grain_id) const
 {
-  // Initialize rho with the default value
-  Real rho = _rho_default;
-
-  // Check if custom columns are available and grain_id is valid
+  // Return initial dislocation density for a given grain
   if (_custom_columns > 0 && grain_id < getGrainNum())
-    rho = getAvgData(grain_id)._custom[0];
+    return getAvgData(grain_id)._custom[0];
 
-  // Apply concurrent recovery mechanism if enabled
-  if (_is_concurrent_recovery)
-  {
-    const Real time_current = _fe_problem.time();
-    
-    // Exponential decay if initial value is greater than the lower bound
-    if (rho > _rho_end)
-      rho = (rho - _rho_end) * std::exp(-_a_rho * time_current) + _rho_end;
-    else
-      rho = _rho_end;
-  }
-
-  // Clamp rho within the specified bounds
-  return std::clamp(rho, _rho_end, _rho_default);
+  return _rho_default;
 }
 
+Real
+EBSDReaderMaterialProperty::getRhoWtTime(unsigned int grain_id) const
+{
+  // Step 1: Get initial dislocation density
+  Real rho = getRhoInit(grain_id);
+
+  // Step 2: Apply concurrent recovery if enabled
+  if (_is_concurrent_recovery)
+  {
+    const Real time = _fe_problem.time();
+
+    if (rho > _rho_end)
+      rho = (rho - _rho_end) * std::exp(-_a_rho * time) + _rho_end;
+    else
+      rho = _rho_end;  // Already recovered
+  }
+
+  // Step 3: Clamp within physical limits and return
+  return std::clamp(rho, _rho_end, _rho_default);
+}

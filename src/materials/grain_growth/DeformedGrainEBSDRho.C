@@ -37,6 +37,7 @@ DeformedGrainEBSDRho::DeformedGrainEBSDRho(const InputParameters & parameters)
     _GNDs_provider(getUserObject<EBSDReaderMaterialProperty>("GNDs_provider")),
 
     _rho_eff(declareProperty<Real>("rho_eff")),
+    _feature_id(declareProperty<Real>("feature_id")),
     _D_stored_energy(_op_num)
 {
   if (_op_num == 0)
@@ -60,6 +61,10 @@ DeformedGrainEBSDRho::computeQpProperties()
   // Retrieve the mapping of order parameters to grain IDs
   const auto & op_to_grains = _grain_tracker.getVarToFeatureVector(_current_elem->id());
   _rho_eff[_qp] = 0.0;
+  _feature_id[_qp] = 0.0;
+
+  bool is_first_set_feature_id = true;
+  bool is_first_set_delta_rho_2 = true;
 
   // Step 2: Compute effective dislocation density (rho_eff)
   for (const auto & grain_id : op_to_grains)
@@ -72,8 +77,15 @@ DeformedGrainEBSDRho::computeQpProperties()
     const Real op_value = (*_vals[op_index])[_qp];
 
     // Get the GNDs for the current grain only once
-    const Real rho_i = _GNDs_provider.getRhoWtTime(grain_id); // GNDs for each grain, 1/m^2
+    const Real rho_i = getRhoWtTime(grain_id); // GNDs for each grain, 1/m^2
     _rho_eff[_qp] += rho_i * op_value * op_value; // rho_eff = sum(rho_i * eta_i^2)
+
+    if (is_first_set_feature_id)
+    {
+      const unsigned int feature_id = _GNDs_provider.getFeatureID(grain_id);
+      _feature_id[_qp] = static_cast<Real>(feature_id);
+      is_first_set_feature_id = false;
+    }  
   }
 
   // Normalize by the sum of squared order parameters
@@ -107,11 +119,22 @@ DeformedGrainEBSDRho::computeQpProperties()
     if (grain_id == FeatureFloodCount::invalid_id)
       continue;
 
-    
     // Get the GNDs for the current grain (cached result)
-    const Real rho_i = _GNDs_provider.getRhoWtTime(grain_id); // GNDs for each grain, 1/m^2
+    const Real rho_i = getRhoWtTime(grain_id); // GNDs for each grain, 1/m^2
     C_deriv = (rho_i - _rho_eff[_qp]) * beta / SumEtai2;
   }
 }
 
+Real 
+DeformedGrainEBSDRho::getRhoWtTime(const unsigned int & grain_id) const
+{
+  const Real y_coord = _grain_tracker.getGrainCentroid(grain_id)(1);
+  const Real rho = _GNDs_provider.getRhoInit(grain_id);
 
+  // (Optional) Skip recovery for grains above a certain y-coordinate
+  if (y_coord > 100.0 && rho > 1.0e13)
+    return std::clamp(rho, 1.0e11, 2.0e15);
+
+  // Get the time-evolved dislocation density for a specified grain
+  return _GNDs_provider.getRhoWtTime(grain_id);
+} 
