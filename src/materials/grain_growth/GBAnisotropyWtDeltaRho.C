@@ -7,7 +7,7 @@ GBAnisotropyWtDeltaRho::validParams()
 {
   InputParameters params = GBAnisotropyMisoriAndTwin::validParams();
   params.addClassDescription("Grain boundary anisotropy considering Delta Rho and twin boundary effects");
-  params.addRequiredParam<UserObjectName>("ebsd_reader", "EBSD data reader");
+  params.addRequiredParam<UserObjectName>("GNDs_provider", "EBSD reader for dislocation density");
   params.addParam<bool>("is_gb_mob_with_delta_rho", false, "Consider GB mobility with Delta Rho");
   params.addParam<Real>("trans_delta_rho", 90.0, "Critical delta rho for transformation considering GB mobility with delta rho"); 
   params.addParam<Real>("amplifier_factor", 1.0, "Amplification factor for GB mobility with delta rho");
@@ -16,7 +16,7 @@ GBAnisotropyWtDeltaRho::validParams()
 
 GBAnisotropyWtDeltaRho::GBAnisotropyWtDeltaRho(const InputParameters & parameters)
   : GBAnisotropyMisoriAndTwin(parameters),
-    _ebsd_reader(getUserObject<EBSDReaderMaterialProperty>("ebsd_reader")),
+    _GNDs_provider(getUserObject<EBSDReaderMaterialProperty>("GNDs_provider")),
     _is_gb_mob_with_delta_rho(getParam<bool>("is_gb_mob_with_delta_rho")),
     _trans_delta_rho(getParam<Real>("trans_delta_rho")),
     _amplifier_factor(getParam<Real>("amplifier_factor")),
@@ -32,13 +32,14 @@ GBAnisotropyWtDeltaRho::initOthersMaterialProperties()
   _delta_rho[_qp] = 0.0;
 }
 
-
 void
 GBAnisotropyWtDeltaRho::calculateOthersMaterialProperties(const unsigned int & grain_i, const unsigned int & grain_j)
 {
   // Efficiently calculate the absolute difference in dislocation density, scaled by length^2
-  const Real rho_i = _ebsd_reader.getRhoWtTime(grain_i);
-  const Real rho_j = _ebsd_reader.getRhoWtTime(grain_j);
+  const Real y_coord_i = _grain_tracker.getGrainCentroid(grain_i)(1);
+  const Real rho_i = _GNDs_provider.getRhoWtTime(grain_i, y_coord_i);
+  const Real y_coord_j = _grain_tracker.getGrainCentroid(grain_j)(1);
+  const Real rho_j = _GNDs_provider.getRhoWtTime(grain_j, y_coord_j);
 
   _delta_rho[_qp] = std::abs(rho_i - rho_j) * _length_scale * _length_scale;
 }

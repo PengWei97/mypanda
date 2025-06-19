@@ -29,7 +29,7 @@ protected:
   virtual void calculatedGBMobilityWtRho(const Real & delta_rho, Real & mob_ij);
 
   // Reference to the EBSD data reader
-  const EBSDReaderMaterialProperty & _ebsd_reader;
+  const EBSDReaderMaterialProperty & _GNDs_provider;
 
   // Flag indicating if GB mobility calculation considers Delta Rho
   const bool _is_gb_mob_with_delta_rho;
