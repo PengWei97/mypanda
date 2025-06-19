@@ -90,5 +90,9 @@ GBAnisotropyMisoriAndTwin::calculateGBMobility(const MisorientationAngleData & m
     {TwinType::Sigma9_FCC, _Sigma9_mob}
   };
 
+  auto it = twin_mobility_map.find(misori_s._twin_type);
+  if (it != twin_mobility_map.end())
+    gbMob = it->second; // update gbSigma to the twin boundary energy
+
   return gbMob;
 }

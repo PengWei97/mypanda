@@ -12,7 +12,7 @@ GBAnisotropyWtGrainType::validParams()
   params.addRequiredParam<UserObjectName>("ebsd_reader", 
     "Name of the EBSD reader user object that provides grain-specific data.");  
   params.addRequiredParam<UserObjectName>("grain_tracker", "GrainTracker user object");
-  params.addRequiredParam<Real>("select_grain_type", "Selected grain type id.");
+  params.addParam<Real>("select_grain_type", 1.0, "Selected grain type id.");
   params.addParam<bool>("gb_energy_anisotropy", false, "Consider GB energy anisotropy");
   params.addParam<bool>("gb_mobility_anisotropy", false, "Consider GB mobility anisotropy");
   params.addParam<Real>("execution_time", 2.0, "Time to perform grain boundary anisotropy");

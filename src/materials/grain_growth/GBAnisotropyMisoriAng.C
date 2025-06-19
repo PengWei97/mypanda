@@ -47,11 +47,11 @@ GBAnisotropyMisoriAng::computeGBProperties()
   // Extract grain IDs and corresponding indices
   for (MooseIndex(op_to_grains) i = 0; i < op_to_grains.size(); ++i)
   {
-      if (op_to_grains[i] != FeatureFloodCount::invalid_id)
-      {
-          var_index.push_back(i);
-          grain_id_index.push_back(op_to_grains[i]);
-      }
+    if (op_to_grains[i] != FeatureFloodCount::invalid_id)
+    {
+        var_index.push_back(i);
+        grain_id_index.push_back(op_to_grains[i]);
+    }
   }
 
   // Set default values
@@ -85,31 +85,33 @@ void GBAnisotropyMisoriAng::computeSigmaAndMobility(const std::vector<unsigned i
                                                     Real &sigma_min, Real & sigma_max,
                                                     Real &mob_min, Real & mob_max)
 {
-    for (unsigned int i = 0; i < grain_id_index.size() - 1; ++i)
+  for (unsigned int i = 0; i < grain_id_index.size() - 1; ++i)
+  {
+    _current_grain_i = grain_id_index[i];
+    auto angles_i = _euler.getEulerAngles(_current_grain_i);
+    for (unsigned int j = i + 1; j < grain_id_index.size(); ++j)
     {
-        auto angles_i = _euler.getEulerAngles(grain_id_index[i]);
-        for (unsigned int j = i + 1; j < grain_id_index.size(); ++j)
-        {
-            auto angles_j = _euler.getEulerAngles(grain_id_index[j]);
-            _misori_s = MisorientationAngleCalculator::calculateMisorientaion(angles_i, angles_j, _misori_s, _crystal_structure);
+        _current_grain_j = grain_id_index[j];
+        auto angles_j = _euler.getEulerAngles(_current_grain_j);
+        _misori_s = MisorientationAngleCalculator::calculateMisorientaion(angles_i, angles_j, _misori_s, _crystal_structure);
 
-            _misori_angle[_qp] = _misori_s._misor;
+        _misori_angle[_qp] = _misori_s._misor;
 
-            calculateOthersMaterialProperties(grain_id_index[i], grain_id_index[j]);
+        calculateOthersMaterialProperties(grain_id_index[i], grain_id_index[j]);
 
-            Real sigma = _gb_energy_anisotropy ? calculateGBEnergy(_misori_s) : _GBsigma_HAGB;
-            Real mobility = _gb_mobility_anisotropy ? calculateGBMobility(_misori_s) : _GBmob_HAGB;
+        Real sigma = _gb_energy_anisotropy ? calculateGBEnergy(_misori_s) : _GBsigma_HAGB;
+        Real mobility = _gb_mobility_anisotropy ? calculateGBMobility(_misori_s) : _GBmob_HAGB;
 
-            _sigma[var_index[i]][var_index[j]] = sigma;
-            _sigma[var_index[j]][var_index[i]] = sigma;
-            _mob[var_index[i]][var_index[j]] = mobility;
-            _mob[var_index[j]][var_index[i]] = mobility;
+        _sigma[var_index[i]][var_index[j]] = sigma;
+        _sigma[var_index[j]][var_index[i]] = sigma;
+        _mob[var_index[i]][var_index[j]] = mobility;
+        _mob[var_index[j]][var_index[i]] = mobility;
 
-            sigma_min = std::min(sigma_min, sigma);
-            sigma_max = std::max(sigma_max, sigma);
-            mob_min = std::min(mob_min, mobility);
-            mob_max = std::max(mob_max, mobility);
-        }
+        sigma_min = std::min(sigma_min, sigma);
+        sigma_max = std::max(sigma_max, sigma);
+        mob_min = std::min(mob_min, mobility);
+        mob_max = std::max(mob_max, mobility);
+      }
     }
 }
 

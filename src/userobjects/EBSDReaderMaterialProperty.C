@@ -29,6 +29,8 @@ EBSDReaderMaterialProperty::getRhoInit(unsigned int grain_id) const
   // Return initial dislocation density for a given grain
   if (_custom_columns > 0 && grain_id < getGrainNum())
     return getAvgData(grain_id)._custom[0];
+  else
+    return _rho_default;
 
   return _rho_default;
 }

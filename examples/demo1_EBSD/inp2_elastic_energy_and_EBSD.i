@@ -113,19 +113,11 @@ my_Hmob = 1.0e-11
 [Kernels]
   [./PolycrystalKernel]
   [../]
-  [./PolycrystalElasticDrivingForce]
-  [../]
+  # [./PolycrystalElasticDrivingForce]
+  # [../]
   [./TensorMechanics]
   [../]
 []
-
-# [Physics/SolidMechanics/QuasiStatic]
-#   [all]
-#     strain = SMALL
-#     # add_variables = true
-#     incremental = true
-#   []
-# []
 
 [AuxKernels]
   [./BndsCalc]
@@ -195,12 +187,12 @@ my_Hmob = 1.0e-11
 []
 
 [BCs]
-  [top_displacement]
-    type = DirichletBC
-    variable = disp_y
-    boundary = top
-    value = -15.0
-  []
+  # [top_displacement]
+  #   type = DirichletBC
+  #   variable = disp_y
+  #   boundary = top
+  #   value = -15.0
+  # []
   [x_anchor]
     type = DirichletBC
     variable = disp_x
@@ -238,17 +230,26 @@ my_Hmob = 1.0e-11
     output_properties = 'L mu misori_angle twinning_type'
     outputs = my_exodus
   [../]
-  [ElasticityTensor]
+  [./ElasticityTensor]
     type = ComputePolycrystalElasticityTensor
     grain_tracker = grain_tracker
-  []
-  [strain]
+  [../]
+  [./strain]
     type = ComputeSmallStrain
     displacements = 'disp_x disp_y'
-  []
-  [stress]
+  [../]
+  [./stress]
     type = ComputeLinearElasticStress
-  []
+  [../]
+  [./elastic_free_energy]
+    type = ElasticEnergyMaterial
+    property_name = Fe
+    block = 0
+    # derivative_order = 1
+
+    output_properties = 'Fe'
+    outputs = my_exodus 
+  [../]
 []
 
 [Postprocessors]
@@ -290,6 +291,12 @@ my_Hmob = 1.0e-11
   petsc_options_iname = '-pc_type -pc_hypre_type -ksp_gmres_restart -pc_hypre_boomeramg_strong_threshold' #  -snes_type
   petsc_options_value = 'hypre boomeramg 31 0.7' # vinewtonrsls
 
+  l_tol = 1e-4 # Relative tolerance for linear solves
+  nl_rel_tol = 1e-10 # Absolute tolerance for nonlienar solves
+  l_max_its = 10 # Max number of linear iterations
+  nl_max_its = 8 # Max number of nonlinear iterations
+  dtmin = 1.0e-4
+
   start_time = 0.0
   end_time = 5.0
   # num_steps = 3
@@ -302,10 +309,10 @@ my_Hmob = 1.0e-11
     optimal_iterations = 8
   [../]
   [./Adaptivity]
-    initial_adaptivity = 1
+    initial_adaptivity = 2
     refine_fraction = 0.8
     coarsen_fraction = 0.05
-    max_h_level = 1
+    max_h_level = 2
   [../]
 []
 

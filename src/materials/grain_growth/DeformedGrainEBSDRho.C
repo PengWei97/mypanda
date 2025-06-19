@@ -19,6 +19,16 @@ DeformedGrainEBSDRho::validParams()
 
   params.addRequiredParam<UserObjectName>("grain_tracker", "GrainTracker UserObject to get values from");
   params.addRequiredParam<UserObjectName>("GNDs_provider", "GNDs provider for EBSD reader");
+
+  params.addParam<bool>("is_concurrent_recovery", false, "Enable concurrent recovery model");
+  params.addParam<bool>("is_select_grains", false, "Enable xxxx");
+
+  params.addParam<Real>("rho_default", 2.0e15, "Dislocation density at the beginning of simulation");
+  params.addParam<Real>("a_rho1", 3.3e-3, "Evolution coefficient during medium time recovery");
+  params.addParam<Real>("rho_end1", 2.10e12, "Dislocation density after long-term concurrent recovery");
+  params.addParam<Real>("a_rho2", 3.3e-3, "Evolution coefficient during medium time recovery");
+  params.addParam<Real>("rho_end2", 2.10e12, "Dislocation density after long-term concurrent recovery");
+
   return params;
 }
 
@@ -35,9 +45,16 @@ DeformedGrainEBSDRho::DeformedGrainEBSDRho(const InputParameters & parameters)
     _JtoeV(6.24150974e18),
     _grain_tracker(getUserObject<GrainTrackerInterface>("grain_tracker")),
     _GNDs_provider(getUserObject<EBSDReaderMaterialProperty>("GNDs_provider")),
-
+    _is_concurrent_recovery(getParam<bool>("is_concurrent_recovery")),
+    _is_select_grains(getParam<bool>("is_select_grains")),
+    _rho_default(getParam<Real>("rho_default")),
+    _a_rho1(getParam<Real>("a_rho1")),
+    _rho_end1(getParam<Real>("rho_end1")),
+    _a_rho2(getParam<Real>("a_rho2")),
+    _rho_end2(getParam<Real>("rho_end2")),
     _rho_eff(declareProperty<Real>("rho_eff")),
     _feature_id(declareProperty<Real>("feature_id")),
+    _grain_type_rho(declareProperty<Real>("grain_type_rho")),
     _D_stored_energy(_op_num)
 {
   if (_op_num == 0)
@@ -62,9 +79,9 @@ DeformedGrainEBSDRho::computeQpProperties()
   const auto & op_to_grains = _grain_tracker.getVarToFeatureVector(_current_elem->id());
   _rho_eff[_qp] = 0.0;
   _feature_id[_qp] = 0.0;
+  _grain_type_rho[_qp] = 0.0;
 
   bool is_first_set_feature_id = true;
-  bool is_first_set_delta_rho_2 = true;
 
   // Step 2: Compute effective dislocation density (rho_eff)
   for (const auto & grain_id : op_to_grains)
@@ -128,13 +145,40 @@ DeformedGrainEBSDRho::computeQpProperties()
 Real 
 DeformedGrainEBSDRho::getRhoWtTime(const unsigned int & grain_id) const
 {
+  Real rho_init = _GNDs_provider.getRhoInit(grain_id);
+
+  if (!_is_concurrent_recovery)
+    return rho_init; // If concurrent recovery is not enabled, return initial dislocation density
+
   const Real y_coord = _grain_tracker.getGrainCentroid(grain_id)(1);
-  const Real rho = _GNDs_provider.getRhoInit(grain_id);
+  const Real time = _fe_problem.time();
 
-  // (Optional) Skip recovery for grains above a certain y-coordinate
-  if (y_coord > 100.0 && rho > 1.0e13)
-    return std::clamp(rho, 1.0e11, 2.0e15);
+  std::unordered_set<unsigned int> select_grain_ids = {99, 255, 347};
+  if (_is_select_grains && select_grain_ids.count(grain_id))
+    rho_init = 1.0e12;
 
-  // Get the time-evolved dislocation density for a specified grain
-  return _GNDs_provider.getRhoWtTime(grain_id);
-} 
+  Real rho_now = rho_init;
+
+  // 对高于阈值y坐标的晶粒，使用不同的恢复模型（类型2）
+  if (y_coord > 100.0 && rho_init > 1.0e13)
+  {
+    _grain_type_rho[_qp] = 2.0;
+
+    if (rho_init > _rho_end2)
+      rho_now = (rho_init - _rho_end2) * std::exp(-_a_rho2 * time) + _rho_end2;
+    else
+      rho_now = _rho_end2;
+    
+    return std::clamp(rho_now, _rho_end2, _rho_default);
+  }
+
+  // 其他晶粒类型（类型1）
+  _grain_type_rho[_qp] = 1.0;
+
+  if (rho_init > _rho_end1)
+    rho_now = (rho_init - _rho_end1) * std::exp(-_a_rho1 * time) + _rho_end1;
+  else
+    rho_now = _rho_end1;
+
+  return std::clamp(rho_now, _rho_end1, _rho_default);
+}

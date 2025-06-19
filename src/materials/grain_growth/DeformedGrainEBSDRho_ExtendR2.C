@@ -52,7 +52,7 @@ DeformedGrainEBSDRho_ExtendR2::getRhoWtTime(const unsigned int & grain_id) const
     return computeRhoWithRecovery(it->second);
 
   // Get the time-evolved dislocation density for a specified grain
-  return _GNDs_provider.getRhoWtTime(grain_id);
+  return _GNDs_provider.getRhoInit(grain_id);
 }
 
 Real

@@ -36,8 +36,17 @@ protected:
   const GrainTrackerInterface & _grain_tracker; // Grain tracker object
   const EBSDReaderMaterialProperty & _GNDs_provider;
 
+  const bool _is_concurrent_recovery; // flag for concurrent recovery
+  const bool _is_select_grains; // flag for concurrent recovery
+  const Real _rho_default; // default dislocation density
+  const Real _a_rho1; // evolution coefficient for first recovery phase
+  const Real _rho_end1; // end dislocation density for first recovery phase
+  const Real _a_rho2; // evolution coefficient for second recovery phase
+  const Real _rho_end2; // end dislocation density for second recovery phase
+
   // Material properties
   MaterialProperty<Real> & _rho_eff; // the average effective dislocation density
   std::vector<MaterialProperty<Real> *> _D_stored_energy;
   MaterialProperty<Real> & _feature_id;
+  MaterialProperty<Real> & _grain_type_rho; // the grain type rho
 };

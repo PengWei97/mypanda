@@ -67,4 +67,8 @@ protected:
 
   /// Material properties for storing misorientation angle and grain type.
   MaterialProperty<Real> & _misori_angle;
+
+  /// current grain id
+  mutable unsigned int _current_grain_i = 0;
+  mutable unsigned int _current_grain_j = 0;
 };
